@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Control de Créditos - DISTINTA.COM</title>
-    <!-- Bootstrap para garantizar diseño adaptativo en móviles y PC -->
+    <!-- Bootstrap para diseño responsivo en móviles y computadoras -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body { background-color: #eef2f7; font-family: sans-serif; }
@@ -16,13 +16,36 @@
         .lista-clientes-item { cursor: pointer; transition: background 0.2s; }
         .lista-clientes-item:hover { background-color: #d0e4ff; }
         .seccion-reporte { background-color: #ffffff; border-radius: 8px; border: 1px solid #dee2e6; }
+        
+        /* Regla para ocultar inmediatamente el panel administrativo si es cliente */
+        html.es-cliente #vistaBusqueda {
+            display: none !important;
+        }
     </style>
+
+    <!-- PASO TÉCNICO 1: Detección ultra rápida en la URL antes de pintar los elementos -->
+    <script>
+        const urlParamsLectura = new URLSearchParams(window.location.search);
+        if (urlParamsLectura.get("modo") === "cliente") {
+            // Añade una clase al elemento raíz HTML para bloquear la vista administrativa al instante
+            document.documentElement.classList.add("es-cliente");
+        }
+    </script>
 </head>
 <body>
 
 <div class="container my-4">
 
-    <!-- VISTA 1: PANEL DE CONTROL (BÚSQUEDA Y REGISTRO) -->
+    <!-- PASO TÉCNICO 2: Pantalla de carga limpia y profesional para el cliente -->
+    <div id="pantallaCargandoCliente" class="text-center py-5 d-none">
+        <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+            <span class="visually-hidden">Cargando...</span>
+        </div>
+        <h4 class="fw-bold text-dark mt-3">Cargando su estado de cuenta...</h4>
+        <p class="text-muted small">DISTINTA.COM - Servicio a Domicilio</p>
+    </div>
+
+    <!-- VISTA 1: PANEL DE CONTROL (BÚSQUEDA Y REGISTRO ADMINISTRATIVO) -->
     <div id="vistaBusqueda" class="row g-4">
         <div class="col-md-5">
             <div class="card p-4 shadow-sm h-100">
@@ -41,7 +64,7 @@
                         <input type="text" id="regDireccion" class="form-control" placeholder="Av. Principal #123" required>
                     </div>
                     
-                    <!-- CAMPOS DE ZONA Y DÍA DE COBRO ALINEADOS EN GRID -->
+                    <!-- CAMPOS DE ZONA Y DÍA DE COBRO -->
                     <div class="row g-2 mb-2">
                         <div class="col-6">
                             <label class="form-label small fw-bold">Zona</label>
@@ -71,7 +94,7 @@
                         <input type="text" id="regArticulo" class="form-control" placeholder="Ej: Celular / Préstamo" required>
                     </div>
 
-                    <!-- REJILLA CON EL CAMPO INFORMATIVO ASIGNADO -->
+                    <!-- REJILLA CON VALORES FINANCIEROS -->
                     <div class="row g-2 mb-3">
                         <div class="col-4">
                             <label class="form-label small fw-bold">Precio ($)</label>
@@ -99,7 +122,7 @@
                     <input type="text" id="inputBuscar" class="form-control form-control-lg" placeholder="🔍 Buscar por Número de Cliente o Nombre..." oninput="filtrarClientes()">
                 </div>
 
-                <!-- ENFOQUE INFORMATIVO DE CONTEO DE CLIENTES REGISTRADOS -->
+                <!-- CONTADOR TOTAL DE CLIENTES EN LISTA -->
                 <div class="alert alert-info py-2 px-3 mb-2 d-flex justify-content-between align-items-center shadow-sm">
                     <span class="fw-bold text-dark small">👥 TOTAL CLIENTES REGISTRADOS (EN LISTA):</span>
                     <span class="fw-bold text-primary fs-5" id="lblSumaTotalActiva">0</span>
@@ -110,7 +133,7 @@
             </div>
         </div>
 
-        <!-- Panel de Consultas y Reportes Financieros -->
+        <!-- PANEL DE REPORTES FINANCIEROS -->
         <div class="col-12 mt-4">
             <div class="seccion-reporte p-4 shadow-sm">
                 <h4 class="fw-bold text-dark mb-3">📊 Panel de Consultas y Reportes Financieros</h4>
@@ -142,7 +165,6 @@
                             <tr>
                                 <th>N° CLIENTE / FOLIO</th>
                                 <th>NOMBRE</th>
-                                <!-- DOCUMENTACIÓN HTML: Adición de la cabecera para la nueva columna informativa -->
                                 <th>ARTÍCULO / SERVICIO</th>
                                 <th id="columnaDinamicaMonto">IMPORTE</th>
                                 <th>FECHA / ACCIÓN</th>
@@ -150,7 +172,6 @@
                         </thead>
                         <tbody id="cuerpoTablaReporte">
                             <tr>
-                                <!-- DOCUMENTACIÓN HTML: Incremento de colspan a 5 para cubrir la nueva columna uniformemente -->
                                 <td colspan="5" class="text-muted small">Selecciona un rango de fechas o ejecuta la detección de impagos semanales.</td>
                             </tr>
                         </tbody>
@@ -241,7 +262,7 @@
     </div>
 </div>
 
-<!-- Módulos de Firebase -->
+<!-- PASO TÉCNICO 3: Módulos de Firebase Firestore y Lógica de Negocio -->
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
     import { 
@@ -267,6 +288,14 @@
 
     const ORDEN_LABORAL = { "Viernes": 0, "Sábado": 1, "Domingo": 2, "Lunes": 3, "Martes": 4, "Miércoles": 5, "Jueves": 6 };
     const MAPEO_NATIVO_A_LABORAL = { 5: 0, 6: 1, 0: 2, 1: 3, 2: 4, 3: 5, 4: 6 };
+
+    // Si es modo cliente, activamos el contenedor de carga en el DOM
+    const parametrosUrl = new URLSearchParams(window.location.search);
+    const modoActual = parametrosUrl.get("modo");
+    if (modoActual === "cliente") {
+        const contenedorCarga = document.getElementById("pantallaCargandoCliente");
+        if (contenedorCarga) contenedorCarga.classList.remove("d-none");
+    }
 
     function formatearDinero(cantidad) {
         return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(cantidad);
@@ -393,7 +422,6 @@
                 const fechaPago = parsearFechaTexto(pago.fecha);
                 if (fechaPago >= fechaInicio && fechaPago <= fechaFin) {
                     acumuladoTotal += pago.abono;
-                    // DOCUMENTACIÓN JAVASCRIPT: Inyección de la celda de artículo en el listado de abonos
                     let fila = `<tr>
                         <td><strong>${cliente.folio}</strong></td>
                         <td>${cliente.nombre}</td>
@@ -455,7 +483,6 @@
                     if (retraso > saldoGlobal) retraso = saldoGlobal;
 
                     acumuladoRetrasos += retraso;
-                    // DOCUMENTACIÓN JAVASCRIPT: Inyección de la celda de artículo en el listado de retrasos históricos
                     let fila = `<tr>
                         <td><span class="badge bg-danger">N° ${cliente.folio}</span></td>
                         <td>${cliente.nombre}</td>
@@ -524,7 +551,6 @@
                         const textoRecordatorio = `Hola *${cliente.nombre}*, te saludamos de DISTINTA.COM. Le recordamos que su día de pago asignado fue el *${cliente.diaCobro}* y aún no vemos reflejado su abono de esta semana por *${formatearDinero(cliente.abonoSemanal)}*. ¿Nos podría confirmar si requiere servicio a domicilio? Quedamos a sus órdenes.`;
                         const urlWhatsApp = `https://api.whatsapp.com/send?text=${encodeURIComponent(textoRecordatorio)}`;
 
-                        // DOCUMENTACIÓN JAVASCRIPT: Inyección de la celda de artículo en la detección de impagos de la semana actual
                         let fila = `<tr>
                             <td><span class="badge bg-dark">N° ${cliente.folio}</span></td>
                             <td class="text-start"><strong>${cliente.nombre}</strong><br><small class="text-muted">Cobro original: ${cliente.diaCobro}</small></td>
@@ -735,6 +761,7 @@
         window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(mensaje)}`, '_blank');
     }
 
+    // PASO TÉCNICO 4: Verificación segura del enlace que abre el cliente
     function verificarPermisosAcceso() {
         const parametros = new URLSearchParams(window.location.search);
         const modo = parametros.get("modo");
@@ -743,7 +770,13 @@
         if (modo === "cliente" && folioBuscado && clientesBD.length > 0) {
             const index = clientesBD.findIndex(c => c.folio === folioBuscado);
             if (index !== -1) {
+                // Se encontró al cliente: Ocultamos el mensaje de carga y mostramos la tarjeta azul
+                const panelCarga = document.getElementById("pantallaCargandoCliente");
+                if (panelCarga) panelCarga.classList.add("d-none");
+
                 seleccionarCliente(index);
+
+                // Ocultamos todos los controles administrativos
                 document.getElementById("seccionAdmin").style.display = "none";
                 document.getElementById("controlesEdicionAdmin").style.display = "none";
                 document.getElementById("btnVolver").style.display = "none";
