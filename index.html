@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Control de Créditos - DISTINTA.COM</title>
-    <!-- Bootstrap para diseño responsivo en móviles y computadoras -->
+    <title>Control de Créditos y Estadísticas - DISTINTA.COM</title>
+    <!-- Bootstrap 5 para garantizar una interfaz moderna y adaptativa en móviles y PC -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body { background-color: #eef2f7; font-family: sans-serif; }
@@ -15,19 +15,20 @@
         .tabla-pagos td { text-align: center; vertical-align: middle; font-size: 0.85rem; background-color: #ffffff; }
         .lista-clientes-item { cursor: pointer; transition: background 0.2s; }
         .lista-clientes-item:hover { background-color: #d0e4ff; }
-        .seccion-reporte { background-color: #ffffff; border-radius: 8px; border: 1px solid #dee2e6; }
-        
-        /* Regla para ocultar inmediatamente el panel administrativo si es cliente */
+        .seccion-dashboard { background-color: #ffffff; border-radius: 10px; border: 1px solid #dee2e6; }
+        .card-kpi { border: none; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.06); }
+        .barra-progreso-lg { height: 24px; border-radius: 12px; font-weight: bold; font-size: 0.9rem; }
+
+        /* DOCUMENTACIÓN: Evita que el cliente vea el panel de control durante la carga */
         html.es-cliente #vistaBusqueda {
             display: none !important;
         }
     </style>
 
-    <!-- PASO TÉCNICO 1: Detección ultra rápida en la URL antes de pintar los elementos -->
+    <!-- Script ejecutado antes del renderizado para evitar parpadeos en modo cliente -->
     <script>
         const urlParamsLectura = new URLSearchParams(window.location.search);
         if (urlParamsLectura.get("modo") === "cliente") {
-            // Añade una clase al elemento raíz HTML para bloquear la vista administrativa al instante
             document.documentElement.classList.add("es-cliente");
         }
     </script>
@@ -36,7 +37,7 @@
 
 <div class="container my-4">
 
-    <!-- PASO TÉCNICO 2: Pantalla de carga limpia y profesional para el cliente -->
+    <!-- Indicador de espera visible únicamente cuando el cliente abre su enlace -->
     <div id="pantallaCargandoCliente" class="text-center py-5 d-none">
         <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
             <span class="visually-hidden">Cargando...</span>
@@ -45,8 +46,10 @@
         <p class="text-muted small">DISTINTA.COM - Servicio a Domicilio</p>
     </div>
 
-    <!-- VISTA 1: PANEL DE CONTROL (BÚSQUEDA Y REGISTRO ADMINISTRATIVO) -->
+    <!-- VISTA 1: PANEL ADMINISTRATIVO Y TABLERO ESTADÍSTICO INTEGRADO -->
     <div id="vistaBusqueda" class="row g-4">
+        
+        <!-- FORMULARIO DE ALTA DE CLIENTE -->
         <div class="col-md-5">
             <div class="card p-4 shadow-sm h-100">
                 <h4 class="fw-bold text-primary mb-3">➕ Registrar Nuevo Cliente</h4>
@@ -63,8 +66,26 @@
                         <label class="form-label small fw-bold">Dirección (Calle y Colonia)</label>
                         <input type="text" id="regDireccion" class="form-control" placeholder="Av. Principal #123" required>
                     </div>
+
+                    <!-- SELECTORES DE CATEGORÍA Y PERIODO -->
+                    <div class="row g-2 mb-2">
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Categoría</label>
+                            <select id="regCategoria" class="form-select" required>
+                                <option value="Artículos" selected>Artículos</option>
+                                <option value="Préstamos">Préstamos</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Periodo</label>
+                            <select id="regPeriodo" class="form-select" required>
+                                <option value="Semanal" selected>Semanal</option>
+                                <option value="Quincenal">Quincenal</option>
+                            </select>
+                        </div>
+                    </div>
                     
-                    <!-- CAMPOS DE ZONA Y DÍA DE COBRO -->
+                    <!-- ZONA Y DÍA DE COBRO -->
                     <div class="row g-2 mb-2">
                         <div class="col-6">
                             <label class="form-label small fw-bold">Zona</label>
@@ -90,22 +111,21 @@
                     </div>
 
                     <div class="mb-2">
-                        <label class="form-label small fw-bold">Artículo / Servicio</label>
-                        <input type="text" id="regArticulo" class="form-control" placeholder="Ej: Celular / Préstamo" required>
+                        <label class="form-label small fw-bold">Artículo / Servicio Específico</label>
+                        <input type="text" id="regArticulo" class="form-control" placeholder="Ej: Lavadora / Préstamo Efectivo" required>
                     </div>
 
-                    <!-- REJILLA CON VALORES FINANCIEROS -->
                     <div class="row g-2 mb-3">
                         <div class="col-4">
                             <label class="form-label small fw-bold">Precio ($)</label>
                             <input type="number" id="regPrecio" class="form-control" placeholder="0.00" required>
                         </div>
                         <div class="col-4">
-                            <label class="form-label small fw-bold">Abono Sem. ($)</label>
+                            <label class="form-label small fw-bold">Cuota ($)</label>
                             <input type="number" id="regAbono" class="form-control" placeholder="0.00" required>
                         </div>
                         <div class="col-4">
-                            <label class="form-label small fw-bold">Cargo por Atraso</label>
+                            <label class="form-label small fw-bold">Cargo Atraso</label>
                             <input type="number" id="regCargoAtraso" class="form-control" placeholder="0.00" value="0">
                         </div>
                     </div>
@@ -114,77 +134,113 @@
             </div>
         </div>
 
+        <!-- LISTA Y BÚSQUEDA DE CUENTAS ACTIVAS -->
         <div class="col-md-7">
             <div class="card p-4 shadow-sm h-100">
                 <h3 class="fw-bold text-dark mb-1">DISTINTA.COM</h3>
                 <p class="text-muted small">Servicio a Domicilio Premium</p>
                 <div class="mb-3">
-                    <input type="text" id="inputBuscar" class="form-control form-control-lg" placeholder="🔍 Buscar por Número de Cliente o Nombre..." oninput="filtrarClientes()">
+                    <input type="text" id="inputBuscar" class="form-control form-control-lg" placeholder="🔍 Buscar por Folio o Nombre..." oninput="filtrarClientes()">
                 </div>
 
-                <!-- CONTADOR TOTAL DE CLIENTES EN LISTA -->
                 <div class="alert alert-info py-2 px-3 mb-2 d-flex justify-content-between align-items-center shadow-sm">
-                    <span class="fw-bold text-dark small">👥 TOTAL CLIENTES REGISTRADOS (EN LISTA):</span>
+                    <span class="fw-bold text-dark small">👥 TOTAL CLIENTES REGISTRADOS:</span>
                     <span class="fw-bold text-primary fs-5" id="lblSumaTotalActiva">0</span>
                 </div>
 
                 <h5 class="fw-bold mt-3">Lista de Cuentas Activas</h5>
-                <div class="list-group shadow-sm overflow-auto" style="max-height: 250px;" id="listaClientesContainer"></div>
+                <div class="list-group shadow-sm overflow-auto" style="max-height: 275px;" id="listaClientesContainer"></div>
             </div>
         </div>
 
-        <!-- PANEL DE REPORTES FINANCIEROS -->
-        <div class="col-12 mt-4">
-            <div class="seccion-reporte p-4 shadow-sm">
-                <h4 class="fw-bold text-dark mb-3">📊 Panel de Consultas y Reportes Financieros</h4>
-                <div class="row g-3 align-items-end mb-4 border-bottom pb-4">
-                    <div class="col-6 col-md-3">
-                        <label class="form-label small fw-bold">Fecha Inicial</label>
-                        <input type="date" id="repFechaInicio" class="form-control">
+        <!-- NUEVA SECCIÓN: TABLERO DE ESTADÍSTICAS Y CONTROL SEMANAL INTEGRADO -->
+        <div class="col-12 mt-3">
+            <div class="seccion-dashboard p-4 shadow-sm">
+                
+                <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2 border-bottom pb-3">
+                    <div>
+                        <h4 class="fw-bold text-dark mb-0">📊 Estadísticas y Control Semanal (Sábado a Jueves)</h4>
+                        <small class="text-muted">Métricas consolidadas en tiempo real desde Firestore</small>
                     </div>
-                    <div class="col-6 col-md-3">
-                        <label class="form-label small fw-bold">Fecha Final</label>
-                        <input type="date" id="repFechaFin" class="form-control">
-                    </div>
-                    <div class="col-6 col-md-3">
-                        <button class="btn btn-primary w-100 fw-bold" onclick="consultarPagosRealizados()">Ver Pagos Realizados</button>
-                    </div>
-                    <div class="col-6 col-md-3">
-                        <button class="btn btn-danger w-100 fw-bold" onclick="consultarRetrasosPendientes()">Ver Retrasos Vencidos</button>
+                    <div class="d-flex align-items-center gap-2">
+                        <label for="inputMetaManual" class="form-label small fw-bold mb-0 text-secondary">🎯 Meta Global ($):</label>
+                        <input type="number" id="inputMetaManual" class="form-control form-control-sm fw-bold text-success" style="width: 140px;" placeholder="80000" value="80000" oninput="ajustarMetaManual()">
                     </div>
                 </div>
 
-                <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
-                    <h5 class="fw-bold text-secondary mb-0" id="tituloTablaReporte">Resultados de la Consulta</h5>
-                    <button class="btn btn-warning btn-sm fw-bold text-dark shadow-sm px-3" onclick="consultarClientesSinPagoEstaSemana()">🚨 Detectar Impagos Semanales</button>
+                <!-- TARJETAS DE INDICADORES CLAVE (KPIS) -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-3 col-6">
+                        <div class="card card-kpi p-3 bg-light border-start border-success border-4">
+                            <small class="text-muted fw-bold d-block">SEMANA ACTUAL</small>
+                            <h4 class="fw-bold text-success mb-0" id="kpiCobradoSemana">$0.00</h4>
+                            <small class="text-secondary" id="kpiTransaccionesSemana">0 abonos</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div class="card card-kpi p-3 bg-light border-start border-secondary border-4">
+                            <small class="text-muted fw-bold d-block">SEMANA ANTERIOR</small>
+                            <h4 class="fw-bold text-secondary mb-0" id="kpiCobradoSemanaAnterior">$0.00</h4>
+                            <small class="text-primary fw-bold" id="lblComparativaPorcentaje">0% vs semana anterior</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div class="card card-kpi p-3 bg-light border-start border-primary border-4">
+                            <small class="text-muted fw-bold d-block">ARTÍCULOS</small>
+                            <h4 class="fw-bold text-primary mb-0" id="kpiTotalArticulos">$0.00</h4>
+                            <small class="text-muted" id="kpiDetalleArticulos">0 abonos</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div class="card card-kpi p-3 bg-light border-start border-warning border-4">
+                            <small class="text-muted fw-bold d-block">PRÉSTAMOS</small>
+                            <h4 class="fw-bold text-dark mb-0" id="kpiTotalPrestamos">$0.00</h4>
+                            <small class="text-muted" id="kpiDetallePrestamos">0 abonos</small>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="table-responsive mt-2">
-                    <table class="table table-bordered table-striped text-center align-middle">
+                <!-- ESCALAS DE CUMPLIMIENTO FRENTE A META GLOBAL -->
+                <div class="card p-3 mb-4 border bg-light">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="fw-bold text-dark mb-0">🎯 Avance Frente a la Meta Global</h6>
+                        <span class="badge bg-primary fs-6" id="lblPorcentajeAlcanzado">0%</span>
+                    </div>
+                    <div class="progress barra-progreso-lg mb-3">
+                        <div id="barraMetaGlobal" class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" style="width: 0%">0%</div>
+                    </div>
+                    <div class="row g-2 text-center text-muted small">
+                        <div class="col-3 border-end"><strong>75%:</strong> <span id="lblMeta75" class="fw-bold text-dark">$0.00</span></div>
+                        <div class="col-3 border-end"><strong>80%:</strong> <span id="lblMeta80" class="fw-bold text-dark">$0.00</span></div>
+                        <div class="col-3 border-end"><strong>85%:</strong> <span id="lblMeta85" class="fw-bold text-dark">$0.00</span></div>
+                        <div class="col-3"><strong>95%:</strong> <span id="lblMeta95" class="fw-bold text-dark">$0.00</span></div>
+                    </div>
+                </div>
+
+                <!-- TABLA DIARIA DE SÁBADO A JUEVES -->
+                <h6 class="fw-bold text-dark mb-2">Desglose Diario de Cobros (Ciclo Activo)</h6>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped text-center align-middle mb-0">
                         <thead class="table-dark">
                             <tr>
-                                <th>N° CLIENTE / FOLIO</th>
-                                <th>NOMBRE</th>
-                                <th>ARTÍCULO / SERVICIO</th>
-                                <th id="columnaDinamicaMonto">IMPORTE</th>
-                                <th>FECHA / ACCIÓN</th>
+                                <th>DÍA DE COBRO</th>
+                                <th>INGRESOS REGISTRADOS</th>
+                                <th>CANTIDAD DE ABONOS</th>
+                                <th>APORTE AL CICLO (%)</th>
                             </tr>
                         </thead>
-                        <tbody id="cuerpoTablaReporte">
-                            <tr>
-                                <td colspan="5" class="text-muted small">Selecciona un rango de fechas o ejecuta la detección de impagos semanales.</td>
-                            </tr>
+                        <tbody id="cuerpoTablaDias">
+                            <!-- Filas generadas por JavaScript -->
                         </tbody>
                     </table>
                 </div>
-                <div class="text-end mt-2">
-                    <h4 class="fw-bold text-primary">Total Periodo: <span id="lblTotalReporte">$0.00</span></h4>
-                </div>
+
             </div>
         </div>
+
     </div>
 
-    <!-- VISTA 2: DETALLE DE LA TARJETA DIGITAL -->
+    <!-- VISTA 2: DETALLE DE LA TARJETA DIGITAL INDIVIDUAL -->
     <div id="vistaTarjeta" class="card card-tarjeta azul p-4 shadow-sm d-none card-tarjeta-azul">
         <div class="mb-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
             <div id="controlesNavegacion">
@@ -215,16 +271,17 @@
                 <p class="mb-1"><strong>NOMBRE:</strong> <span id="lblNombre">-</span></p>
                 <p class="mb-1"><strong>DIRECCIÓN:</strong> <span id="lblDireccion">-</span></p>
                 <p class="mb-1"><strong>ZONA:</strong> <span id="lblZona">-</span></p>
+                <p class="mb-1"><strong>TIPO:</strong> <span id="lblCategoriaPeriodo">-</span></p>
             </div>
             <div class="col-md-6 text-md-end">
-                <p class="mb-1"><strong>ARTÍCULO:</strong> <span id="lblArticulo">-</span></p>
+                <p class="mb-1"><strong>CONCEPTO:</strong> <span id="lblArticulo">-</span></p>
                 <p class="mb-1"><strong>PRECIO:</strong> <span id="lblPrecio">$0.00</span></p>
-                <p class="mb-1"><strong>IMPORTE SEMANAL:</strong> <span id="lblAbonoSemanal">$0.00</span></p>
+                <p class="mb-1"><strong>CUOTA:</strong> <span id="lblAbonoSemanal">$0.00</span></p>
             </div>
         </div>
 
         <div id="seccionAdmin" class="card p-3 mb-4 bg-light border-0 shadow-sm text-dark">
-            <h6 class="fw-bold mb-2">Capturar Pago Semanal</h6>
+            <h6 class="fw-bold mb-2">Capturar Pago Semanal / Quincenal</h6>
             <div class="row g-2">
                 <div class="col-6 col-md-3">
                     <label class="form-label small fw-bold mb-1">Abono ($)</label>
@@ -248,7 +305,7 @@
             <table class="table table-bordered table-striped tabla-pagos">
                 <thead>
                     <tr>
-                        <th>SEMANA/FIRMA</th>
+                        <th>N°/FIRMA</th>
                         <th>ABONO</th>
                         <th>PAGADO</th>
                         <th>CARGO</th>
@@ -260,9 +317,10 @@
             </table>
         </div>
     </div>
+
 </div>
 
-<!-- PASO TÉCNICO 3: Módulos de Firebase Firestore y Lógica de Negocio -->
+<!-- Firebase Firestore Modular SDK v9 -->
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
     import { 
@@ -286,27 +344,54 @@
     let clienteSeleccionadoIndex = null;
     let editando = false;
 
-    const ORDEN_LABORAL = { "Viernes": 0, "Sábado": 1, "Domingo": 2, "Lunes": 3, "Martes": 4, "Miércoles": 5, "Jueves": 6 };
-    const MAPEO_NATIVO_A_LABORAL = { 5: 0, 6: 1, 0: 2, 1: 3, 2: 4, 3: 5, 4: 6 };
+    // Recuperar la meta manual guardada en el navegador
+    const metaGuardada = localStorage.getItem("metaCobranzaDistinta");
+    if (metaGuardada) {
+        document.getElementById("inputMetaManual").value = metaGuardada;
+    }
 
-    // Si es modo cliente, activamos el contenedor de carga en el DOM
+    // Validación para el modo cliente desde WhatsApp
     const parametrosUrl = new URLSearchParams(window.location.search);
-    const modoActual = parametrosUrl.get("modo");
-    if (modoActual === "cliente") {
-        const contenedorCarga = document.getElementById("pantallaCargandoCliente");
-        if (contenedorCarga) contenedorCarga.classList.remove("d-none");
+    if (parametrosUrl.get("modo") === "cliente") {
+        const panelCarga = document.getElementById("pantallaCargandoCliente");
+        if (panelCarga) panelCarga.classList.remove("d-none");
     }
 
     function formatearDinero(cantidad) {
         return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(cantidad);
     }
 
+    function parsearFechaTexto(fechaTexto) {
+        const partes = fechaTexto.split("/");
+        const dia = parseInt(partes[0], 10);
+        const mes = parseInt(partes[1], 10) - 1;
+        return new Date(2026, mes, dia);
+    }
+
+    // DOCUMENTACIÓN: Calcula los cortes del ciclo de Sábado a Jueves
+    function obtenerRangoCiclo(offsetSemanas = 0) {
+        const hoy = new Date();
+        const diaSemana = hoy.getDay(); // 0: Dom, 1: Lun, ..., 6: Sáb
+        const diasDesdeSabado = (diaSemana + 1) % 7;
+
+        let sabadoInicio = new Date(hoy);
+        sabadoInicio.setDate(hoy.getDate() - diasDesdeSabado - (offsetSemanas * 7));
+        sabadoInicio.setHours(0, 0, 0, 0);
+
+        let juevesFin = new Date(sabadoInicio);
+        juevesFin.setDate(sabadoInicio.getDate() + 6);
+        juevesFin.setHours(23, 59, 59, 999);
+
+        return { inicio: sabadoInicio, fin: juevesFin };
+    }
+
+    // Sincronización en tiempo real con Firestore
     onSnapshot(collection(db, "clientes"), (snapshot) => {
         clientesBD = [];
         snapshot.forEach((doc) => {
             clientesBD.push({ id: doc.id, ...doc.data() });
         });
-        
+
         if (clienteSeleccionadoIndex !== null) {
             const idActual = document.getElementById("lblFolio").getAttribute("data-db-id");
             const nuevoIndex = clientesBD.findIndex(c => c.id === idActual);
@@ -318,14 +403,18 @@
             }
         }
         filtrarClientes();
-        verificarPermisosAcceso(); 
+        procesarMetricas();
+        verificarPermisosAcceso();
     });
 
+    // Alta de cliente con Categoría y Periodo
     async function registrarCliente(event) {
         event.preventDefault();
         const folio = document.getElementById("regNumero").value;
         const nombre = document.getElementById("regNombre").value;
         const direccion = document.getElementById("regDireccion").value;
+        const categoria = document.getElementById("regCategoria").value;
+        const periodo = document.getElementById("regPeriodo").value;
         const zona = document.getElementById("regZona").value;
         const diaCobro = document.getElementById("regDiaCobro").value;
         const articulo = document.getElementById("regArticulo").value;
@@ -335,15 +424,17 @@
 
         try {
             await addDoc(collection(db, "clientes"), {
-                folio: folio,
-                nombre: nombre,
-                direccion: direccion,
-                zona: zona,
-                diaCobro: diaCobro,
-                articulo: articulo,
-                precio: precio,
-                abonoSemanal: abonoSemanal,
-                cargoAtrasoInicial: cargoAtrasoInicial,
+                folio,
+                nombre,
+                direccion,
+                categoria,
+                periodo,
+                zona,
+                diaCobro,
+                articulo,
+                precio,
+                abonoSemanal,
+                cargoAtrasoInicial,
                 historialPagos: []
             });
             document.getElementById("formNuevoCliente").reset();
@@ -357,7 +448,6 @@
     function filtrarClientes() {
         const query = document.getElementById("inputBuscar").value.toLowerCase();
         const container = document.getElementById("listaClientesContainer");
-        
         if (!container) return;
         container.innerHTML = "";
 
@@ -365,20 +455,19 @@
 
         clientesBD.forEach((cliente, index) => {
             if (cliente.nombre.toLowerCase().includes(query) || cliente.folio.toLowerCase().includes(query)) {
-                let totalPagado = cliente.historialPagos.reduce((sum, p) => sum + p.abono, 0);
-                let totalCargosHistorial = cliente.historialPagos.reduce((sum, p) => sum + p.cargo, 0);
-                let saldoActual = cliente.precio + totalCargosHistorial - totalPagado;
+                let totalPagado = (cliente.historialPagos || []).reduce((sum, p) => sum + p.abono, 0);
+                let totalCargos = (cliente.historialPagos || []).reduce((sum, p) => sum + p.cargo, 0);
+                let saldoActual = cliente.precio + totalCargos - totalPagado;
 
                 totalClientesListados++;
-
-                let zonaAsignada = cliente.zona || 'Local';
-                let diaCobroAsignado = cliente.diaCobro || 'Sin asignar';
+                let cat = cliente.categoria || "Artículos";
+                let per = cliente.periodo || "Semanal";
 
                 let item = `<div class="list-group-item list-group-item-action lista-clientes-item d-flex justify-content-between align-items-center" onclick="seleccionarCliente(${index})">
                     <div>
                         <span class="badge bg-primary me-2">N° ${cliente.folio}</span>
                         <strong>${cliente.nombre}</strong>
-                        <br><small class="text-muted">${cliente.articulo} (${zonaAsignada} - Cobro: ${diaCobroAsignado})</small>
+                        <br><small class="text-muted">${cat} (${per}) - ${cliente.articulo}</small>
                     </div>
                     <span class="badge bg-danger">Saldo: ${formatearDinero(saldoActual)}</span>
                 </div>`;
@@ -386,190 +475,118 @@
             }
         });
 
-        const lblSumaTotal = document.getElementById("lblSumaTotalActiva");
-        if (lblSumaTotal) {
-            lblSumaTotal.innerText = totalClientesListados;
-        }
+        const lblTotal = document.getElementById("lblSumaTotalActiva");
+        if (lblTotal) lblTotal.innerText = totalClientesListados;
     }
 
-    function parsearFechaTexto(fechaTexto) {
-        const partes = fechaTexto.split("/");
-        const dia = parseInt(partes[0], 10);
-        const mes = parseInt(partes[1], 10) - 1; 
-        return new Date(2026, mes, dia);
-    }
+    // DOCUMENTACIÓN: Procesa las estadísticas del ciclo Sábado a Jueves y Metas
+    function procesarMetricas() {
+        let totalSemanaActual = 0;
+        let abonosSemanaActual = 0;
+        let totalSemanaAnterior = 0;
 
-    function consultarPagosRealizados() {
-        const inicioStr = document.getElementById("repFechaInicio").value;
-        const finStr = document.getElementById("repFechaFin").value;
-        const cuerpo = document.getElementById("cuerpoTablaReporte");
-        
-        if (!inicioStr || !finStr) {
-            alert("Por favor selecciona ambas fechas.");
-            return;
-        }
+        let totalArticulos = 0;
+        let abonosArticulos = 0;
+        let totalPrestamos = 0;
+        let abonosPrestamos = 0;
 
-        const fechaInicio = new Date(inicioStr + "T00:00:00");
-        const fechaFin = new Date(finStr + "T23:59:59");
-        cuerpo.innerHTML = "";
-        let acumuladoTotal = 0;
+        const cicloActual = obtenerRangoCiclo(0);
+        const cicloAnterior = obtenerRangoCiclo(1);
 
-        document.getElementById("columnaDinamicaMonto").innerText = "IMPORTE ABONADO";
-        document.getElementById("tituloTablaReporte").innerText = "Resultados de la Consulta";
+        const diasSemanaMap = {
+            6: { nombre: "Sábado", total: 0, conteo: 0 },
+            0: { nombre: "Domingo", total: 0, conteo: 0 },
+            1: { nombre: "Lunes", total: 0, conteo: 0 },
+            2: { nombre: "Martes", total: 0, conteo: 0 },
+            3: { nombre: "Miércoles", total: 0, conteo: 0 },
+            4: { nombre: "Jueves", total: 0, conteo: 0 }
+        };
 
         clientesBD.forEach(cliente => {
-            cliente.historialPagos.forEach(pago => {
-                const fechaPago = parsearFechaTexto(pago.fecha);
-                if (fechaPago >= fechaInicio && fechaPago <= fechaFin) {
-                    acumuladoTotal += pago.abono;
-                    let fila = `<tr>
-                        <td><strong>${cliente.folio}</strong></td>
-                        <td>${cliente.nombre}</td>
-                        <td><span class="badge bg-secondary text-wrap">${cliente.articulo || 'Sin especificar'}</span></td>
-                        <td class="text-success fw-bold">${formatearDinero(pago.abono)}</td>
-                        <td>${pago.fecha}</td>
-                    </tr>`;
-                    cuerpo.innerHTML += fila;
+            const esPrestamo = (cliente.categoria === "Préstamos") || 
+                               (cliente.articulo || "").toLowerCase().includes("préstamo") || 
+                               (cliente.articulo || "").toLowerCase().includes("prestamo") || 
+                               (cliente.articulo || "").toLowerCase().includes("pp");
+
+            (cliente.historialPagos || []).forEach(pago => {
+                const fPago = parsearFechaTexto(pago.fecha);
+
+                // Pagos del ciclo en curso
+                if (fPago >= cicloActual.inicio && fPago <= cicloActual.fin) {
+                    totalSemanaActual += pago.abono;
+                    abonosSemanaActual++;
+
+                    if (esPrestamo) {
+                        totalPrestamos += pago.abono;
+                        abonosPrestamos++;
+                    } else {
+                        totalArticulos += pago.abono;
+                        abonosArticulos++;
+                    }
+
+                    const dia = fPago.getDay();
+                    if (diasSemanaMap[dia]) {
+                        diasSemanaMap[dia].total += pago.abono;
+                        diasSemanaMap[dia].conteo++;
+                    }
+                }
+
+                // Pagos del ciclo previo para comparativa
+                if (fPago >= cicloAnterior.inicio && fPago <= cicloAnterior.fin) {
+                    totalSemanaAnterior += pago.abono;
                 }
             });
         });
 
-        if (cuerpo.innerHTML === "") {
-            cuerpo.innerHTML = `<tr><td colspan="5" class="text-muted">No se encontraron pagos en este rango.</td></tr>`;
-        }
-        document.getElementById("lblTotalReporte").innerText = formatearDinero(acumuladoTotal);
+        // Actualización de KPIs en pantalla
+        document.getElementById("kpiCobradoSemana").innerText = formatearDinero(totalSemanaActual);
+        document.getElementById("kpiTransaccionesSemana").innerText = `${abonosSemanaActual} abonos registrados`;
+        document.getElementById("kpiCobradoSemanaAnterior").innerText = formatearDinero(totalSemanaAnterior);
+
+        let difPorcentaje = totalSemanaAnterior > 0 ? ((totalSemanaActual / totalSemanaAnterior) * 100).toFixed(1) : 100;
+        document.getElementById("lblComparativaPorcentaje").innerText = `${difPorcentaje}% vs semana anterior`;
+
+        document.getElementById("kpiTotalArticulos").innerText = formatearDinero(totalArticulos);
+        document.getElementById("kpiDetalleArticulos").innerText = `${abonosArticulos} abonos`;
+        document.getElementById("kpiTotalPrestamos").innerText = formatearDinero(totalPrestamos);
+        document.getElementById("kpiDetallePrestamos").innerText = `${abonosPrestamos} abonos`;
+
+        // Cálculo contra Meta Global
+        const metaGlobal = parseFloat(document.getElementById("inputMetaManual").value) || 0;
+        document.getElementById("lblMeta75").innerText = formatearDinero(metaGlobal * 0.75);
+        document.getElementById("lblMeta80").innerText = formatearDinero(metaGlobal * 0.80);
+        document.getElementById("lblMeta85").innerText = formatearDinero(metaGlobal * 0.85);
+        document.getElementById("lblMeta95").innerText = formatearDinero(metaGlobal * 0.95);
+
+        let porcentajeMeta = metaGlobal > 0 ? Math.min(Math.round((totalSemanaActual / metaGlobal) * 100), 100) : 0;
+        document.getElementById("lblPorcentajeAlcanzado").innerText = `${porcentajeMeta}% alcanzado`;
+
+        const barra = document.getElementById("barraMetaGlobal");
+        barra.style.width = `${porcentajeMeta}%`;
+        barra.innerText = `${porcentajeMeta}%`;
+
+        // Llenado de la tabla diaria
+        const cuerpoTabla = document.getElementById("cuerpoTablaDias");
+        cuerpoTabla.innerHTML = "";
+        const ordenDias = [6, 0, 1, 2, 3, 4]; // Sábado a Jueves
+
+        ordenDias.forEach(numDia => {
+            const dato = diasSemanaMap[numDia];
+            const pct = totalSemanaActual > 0 ? ((dato.total / totalSemanaActual) * 100).toFixed(1) : 0;
+            let fila = `<tr>
+                <td><strong>${dato.nombre}</strong></td>
+                <td class="text-success fw-bold">${formatearDinero(dato.total)}</td>
+                <td>${dato.conteo}</td>
+                <td><span class="badge bg-secondary">${pct}%</span></td>
+            </tr>`;
+            cuerpoTabla.innerHTML += fila;
+        });
     }
 
-    function consultarRetrasosPendientes() {
-        const inicioStr = document.getElementById("repFechaInicio").value;
-        const finStr = document.getElementById("repFechaFin").value;
-        const cuerpo = document.getElementById("cuerpoTablaReporte");
-
-        if (!inicioStr || !finStr) {
-            alert("Por favor selecciona ambas fechas.");
-            return;
-        }
-
-        const fechaInicio = new Date(inicioStr + "T00:00:00");
-        const fechaFin = new Date(finStr + "T23:59:59");
-        cuerpo.innerHTML = "";
-        let acumuladoRetrasos = 0;
-
-        document.getElementById("columnaDinamicaMonto").innerText = "RETRASO ACUMULADO";
-        document.getElementById("tituloTablaReporte").innerText = "Resultados de la Consulta";
-
-        const milisegundosPorSemana = 1000 * 60 * 60 * 24 * 7;
-        let semanasPeriodo = Math.ceil((fechaFin - fechaInicio) / milisegundosPorSemana);
-        if (semanasPeriodo <= 0) semanasPeriodo = 1;
-
-        clientesBD.forEach(cliente => {
-            let totalPagado = cliente.historialPagos.reduce((sum, p) => sum + p.abono, 0);
-            let totalCargosHistorial = cliente.historialPagos.reduce((sum, p) => sum + p.cargo, 0);
-            let saldoGlobal = cliente.precio + totalCargosHistorial - totalPagado;
-
-            if (saldoGlobal > 0) {
-                let pagadoEnPeriodo = 0;
-                cliente.historialPagos.forEach(pago => {
-                    const fPago = parsearFechaTexto(pago.fecha);
-                    if (fPago >= fechaInicio && fPago <= fechaFin) {
-                        pagadoEnPeriodo += pago.abono;
-                    }
-                });
-
-                let esperadoEnPeriodo = cliente.abonoSemanal * semanasPeriodo;
-                
-                if (pagadoEnPeriodo < esperadoEnPeriodo) {
-                    let retraso = esperadoEnPeriodo - pagadoEnPeriodo;
-                    if (retraso > saldoGlobal) retraso = saldoGlobal;
-
-                    acumuladoRetrasos += retraso;
-                    let fila = `<tr>
-                        <td><span class="badge bg-danger">N° ${cliente.folio}</span></td>
-                        <td>${cliente.nombre}</td>
-                        <td><span class="badge bg-secondary text-wrap">${cliente.articulo || 'Sin especificar'}</span></td>
-                        <td class="text-danger fw-bold">${formatearDinero(retraso)}</td>
-                        <td>${semanasPeriodo} Sem. Evaluadas</td>
-                    </tr>`;
-                    cuerpo.innerHTML += fila;
-                }
-            }
-        });
-
-        if (cuerpo.innerHTML === "") {
-            cuerpo.innerHTML = `<tr><td colspan="5" class="text-muted">Ningún cliente presenta retrasos en este periodo.</td></tr>`;
-        }
-        document.getElementById("lblTotalReporte").innerText = formatearDinero(acumuladoRetrasos);
-    }
-
-    function consultarClientesSinPagoEstaSemana() {
-        const cuerpo = document.getElementById("cuerpoTablaReporte");
-        if (!cuerpo) return;
-        
-        cuerpo.innerHTML = "";
-        document.getElementById("columnaDinamicaMonto").innerText = "CUOTA PENDIENTE";
-        document.getElementById("tituloTablaReporte").innerText = "Resultados: Impagos de la Semana Actual";
-        
-        const hoy = new Date();
-        const diaSemanaNativo = hoy.getDay();
-        const indiceLaboralHoy = MAPEO_NATIVO_A_LABORAL[diaSemanaNativo];
-
-        let diasDesdeViernes = diaSemanaNativo >= 5 ? diaSemanaNativo - 5 : diaSemanaNativo + 2;
-        
-        let fechaViernesInicio = new Date(hoy);
-        fechaViernesInicio.setDate(hoy.getDate() - diasDesdeViernes);
-        fechaViernesInicio.setHours(0, 0, 0, 0);
-
-        let fechaJuevesFin = new Date(fechaViernesInicio);
-        fechaJuevesFin.setDate(fechaViernesInicio.getDate() + 6);
-        fechaJuevesFin.setHours(23, 59, 59, 999);
-
-        let acumuladoTotalPendiente = 0;
-
-        clientesBD.forEach(cliente => {
-            if (!cliente.diaCobro) return;
-
-            const indiceLaboralCliente = ORDEN_LABORAL[cliente.diaCobro];
-            
-            if (indiceLaboralCliente <= indiceLaboralHoy) {
-                let totalPagado = cliente.historialPagos.reduce((sum, p) => sum + p.abono, 0);
-                let totalCargosHistorial = cliente.historialPagos.reduce((sum, p) => sum + p.cargo, 0);
-                let saldoGlobal = cliente.precio + totalCargosHistorial - totalPagado;
-
-                if (saldoGlobal > 0) {
-                    let yaPagoEstaSemana = false;
-
-                    cliente.historialPagos.forEach(pago => {
-                        const fPago = parsearFechaTexto(pago.fecha);
-                        if (fPago >= fechaViernesInicio && fPago <= fechaJuevesFin) {
-                            yaPagoEstaSemana = true;
-                        }
-                    });
-
-                    if (!yaPagoEstaSemana) {
-                        acumuladoTotalPendiente += cliente.abonoSemanal;
-                        
-                        const textoRecordatorio = `Hola *${cliente.nombre}*, te saludamos de DISTINTA.COM. Le recordamos que su día de pago asignado fue el *${cliente.diaCobro}* y aún no vemos reflejado su abono de esta semana por *${formatearDinero(cliente.abonoSemanal)}*. ¿Nos podría confirmar si requiere servicio a domicilio? Quedamos a sus órdenes.`;
-                        const urlWhatsApp = `https://api.whatsapp.com/send?text=${encodeURIComponent(textoRecordatorio)}`;
-
-                        let fila = `<tr>
-                            <td><span class="badge bg-dark">N° ${cliente.folio}</span></td>
-                            <td class="text-start"><strong>${cliente.nombre}</strong><br><small class="text-muted">Cobro original: ${cliente.diaCobro}</small></td>
-                            <td><span class="badge bg-secondary text-wrap">${cliente.articulo || 'Sin especificar'}</span></td>
-                            <td class="text-danger fw-bold">${formatearDinero(cliente.abonoSemanal)}</td>
-                            <td>
-                                <a href="${urlWhatsApp}" target="_blank" class="btn btn-success btn-sm fw-bold shadow-sm px-3">💬 Enviar Recordatorio</a>
-                            </td>
-                        </tr>`;
-                        cuerpo.innerHTML += fila;
-                    }
-                }
-            }
-        });
-
-        if (cuerpo.innerHTML === "") {
-            cuerpo.innerHTML = `<tr><td colspan="5" class="text-muted small">Todos los clientes programados se encuentran al corriente esta semana.</td></tr>`;
-        }
-        document.getElementById("lblTotalReporte").innerText = formatearDinero(acumuladoTotalPendiente);
+    function ajustarMetaManual() {
+        const valor = document.getElementById("inputMetaManual").value;
+        localStorage.setItem("metaCobranzaDistinta", valor);
+        procesarMetricas();
     }
 
     function seleccionarCliente(index) {
@@ -583,10 +600,10 @@
         renderizarHistorialCliente(cliente);
 
         const hoy = new Date();
-        const año = hoy.getFullYear();
-        const mes = String(hoy.getMonth() + 1).padStart(2, '0');
-        const dia = String(hoy.getDate()).padStart(2, '0');
-        document.getElementById("inputFechaPago").value = `${año}-${mes}-${dia}`;
+        const y = hoy.getFullYear();
+        const m = String(hoy.getMonth() + 1).padStart(2, '0');
+        const d = String(hoy.getDate()).padStart(2, '0');
+        document.getElementById("inputFechaPago").value = `${y}-${m}-${d}`;
 
         document.getElementById("vistaBusqueda").classList.add("d-none");
         document.getElementById("vistaTarjeta").classList.remove("d-none");
@@ -597,16 +614,16 @@
         let inicialPenalizacion = cliente.cargoAtrasoInicial || 0;
         contenedor.innerHTML = `
             <div class="col-md-6">
-                <p class="mb-1"><strong>NOMBRE:</strong> <span id="lblNombre">${cliente.nombre}</span></p>
-                <p class="mb-1"><strong>DIRECCIÓN:</strong> <span id="lblDireccion">${cliente.direccion}</span></p>
-                <p class="mb-1"><strong>ZONA:</strong> <span id="lblZona">${cliente.zona || 'Local'}</span></p>
-                <p class="mb-1"><strong>DÍA DE COBRO:</strong> <span>${cliente.diaCobro || 'Sin Asignar'}</span></p>
+                <p class="mb-1"><strong>NOMBRE:</strong> <span>${cliente.nombre}</span></p>
+                <p class="mb-1"><strong>DIRECCIÓN:</strong> <span>${cliente.direccion}</span></p>
+                <p class="mb-1"><strong>ZONA:</strong> <span>${cliente.zona || 'Local'}</span> (Cobro: ${cliente.diaCobro || 'N/A'})</p>
+                <p class="mb-1"><strong>TIPO:</strong> <span class="badge bg-primary">${cliente.categoria || 'Artículos'}</span> <span class="badge bg-secondary">${cliente.periodo || 'Semanal'}</span></p>
             </div>
             <div class="col-md-6 text-md-end">
-                <p class="mb-1"><strong>ARTÍCULO:</strong> <span id="lblArticulo">${cliente.articulo}</span></p>
-                <p class="mb-1"><strong>PRECIO ORIGINARIO:</strong> <span>${formatearDinero(cliente.precio)}</span></p>
-                <p class="mb-1"><strong>CARGO POR ATRASO (INF.):</strong> <span>${formatearDinero(inicialPenalizacion)}</span></p>
-                <p class="mb-1"><strong>IMPORTE SEMANAL:</strong> <span id="lblAbonoSemanal">${formatearDinero(cliente.abonoSemanal)}</span></p>
+                <p class="mb-1"><strong>CONCEPTO:</strong> <span>${cliente.articulo}</span></p>
+                <p class="mb-1"><strong>PRECIO:</strong> <span>${formatearDinero(cliente.precio)}</span></p>
+                <p class="mb-1"><strong>CARGO INICIAL:</strong> <span>${formatearDinero(inicialPenalizacion)}</span></p>
+                <p class="mb-1"><strong>CUOTA PACTADA:</strong> <span>${formatearDinero(cliente.abonoSemanal)}</span></p>
             </div>`;
     }
 
@@ -624,32 +641,40 @@
                 <div class="col-md-6">
                     <div class="mb-2"><strong>NOMBRE:</strong><input type="text" id="editNombre" class="form-control form-control-sm" value="${cliente.nombre}"></div>
                     <div class="mb-2"><strong>DIRECCIÓN:</strong><input type="text" id="editDireccion" class="form-control form-control-sm" value="${cliente.direccion}"></div>
-                    <div class="mb-2"><strong>ZONA:</strong>
-                        <select id="editZona" class="form-select form-select-sm">
-                            <option value="Local" ${cliente.zona === 'Local' ? 'selected' : ''}>Local</option>
-                            <option value="Foránea" ${cliente.zona === 'Foránea' ? 'selected' : ''}>Foránea</option>
+                    <div class="mb-2"><strong>CATEGORÍA:</strong>
+                        <select id="editCategoria" class="form-select form-select-sm">
+                            <option value="Artículos" ${cliente.categoria === 'Artículos' ? 'selected' : ''}>Artículos</option>
+                            <option value="Préstamos" ${cliente.categoria === 'Préstamos' ? 'selected' : ''}>Préstamos</option>
+                        </select>
+                    </div>
+                    <div class="mb-2"><strong>PERIODO:</strong>
+                        <select id="editPeriodo" class="form-select form-select-sm">
+                            <option value="Semanal" ${cliente.periodo === 'Semanal' ? 'selected' : ''}>Semanal</option>
+                            <option value="Quincenal" ${cliente.periodo === 'Quincenal' ? 'selected' : ''}>Quincenal</option>
                         </select>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="mb-2"><strong>ARTÍCULO:</strong><input type="text" id="editArticulo" class="form-control form-control-sm" value="${cliente.articulo}"></div>
                     <div class="mb-2"><strong>PRECIO ($):</strong><input type="number" id="editPrecio" class="form-control form-control-sm" value="${cliente.precio}"></div>
-                    <div class="mb-2"><strong>IMPORTE SEMANAL ($):</strong><input type="number" id="editAbono" class="form-control form-control-sm" value="${cliente.abonoSemanal}"></div>
+                    <div class="mb-2"><strong>CUOTA ($):</strong><input type="number" id="editAbono" class="form-control form-control-sm" value="${cliente.abonoSemanal}"></div>
                 </div>`;
         } else {
             const nombreNue = document.getElementById("editNombre").value;
             const direccionNue = document.getElementById("editDireccion").value;
-            const zonaNue = document.getElementById("editZona").value;
+            const categoriaNue = document.getElementById("editCategoria").value;
+            const periodoNue = document.getElementById("editPeriodo").value;
             const articuloNue = document.getElementById("editArticulo").value;
             const precioNue = parseFloat(document.getElementById("editPrecio").value) || 0;
             const abonoNue = parseFloat(document.getElementById("editAbono").value) || 0;
 
             try {
-                const clienteRef = doc(db, "clientes", cliente.id);
-                await updateDoc(clienteRef, {
+                const ref = doc(db, "clientes", cliente.id);
+                await updateDoc(ref, {
                     nombre: nombreNue,
                     direccion: direccionNue,
-                    zona: zonaNue,
+                    categoria: categoriaNue,
+                    periodo: periodoNue,
                     articulo: articuloNue,
                     precio: precioNue,
                     abonoSemanal: abonoNue
@@ -665,8 +690,7 @@
 
     async function eliminarClienteActual() {
         const cliente = clientesBD[clienteSeleccionadoIndex];
-        const confirmar = confirm(`¿Borrar permanentemente a ${cliente.nombre}?`);
-        if (confirmar) {
+        if (confirm(`¿Borrar permanentemente la cuenta de ${cliente.nombre}?`)) {
             try {
                 await deleteDoc(doc(db, "clientes", cliente.id));
                 clienteSeleccionadoIndex = null;
@@ -679,20 +703,20 @@
 
     function renderizarHistorialCliente(cliente) {
         const tabla = document.getElementById("cuerpoTablaPagos");
-        tabla.innerHTML = ""; 
-        let acumuladoPagado = 0;
-        let saldoCalculado = cliente.precio;
+        tabla.innerHTML = "";
+        let acumulado = 0;
+        let saldo = cliente.precio;
 
-        cliente.historialPagos.forEach((pago, i) => {
-            acumuladoPagado += pago.abono;
-            saldoCalculado = saldoCalculado - pago.abono + pago.cargo;
-            let numSemana = String(i + 1).padStart(2, '0');
+        (cliente.historialPagos || []).forEach((pago, i) => {
+            acumulado += pago.abono;
+            saldo = saldo - pago.abono + pago.cargo;
+            let num = String(i + 1).padStart(2, '0');
             let fila = `<tr>
-                <td><strong>${numSemana}</strong></td>
+                <td><strong>${num}</strong></td>
                 <td>${formatearDinero(pago.abono)}</td>
-                <td>${formatearDinero(acumuladoPagado)}</td>
+                <td>${formatearDinero(acumulado)}</td>
                 <td>${formatearDinero(pago.cargo)}</td>
-                <td class="text-danger fw-bold">${formatearDinero(saldoCalculado)}</td>
+                <td class="text-danger fw-bold">${formatearDinero(saldo)}</td>
                 <td>${pago.fecha}</td>
             </tr>`;
             tabla.innerHTML += fila;
@@ -701,39 +725,37 @@
 
     async function agregarPagoAClienteActual() {
         const cliente = clientesBD[clienteSeleccionadoIndex];
-        const inputAbono = document.getElementById("inputAbono");
-        const inputCargo = document.getElementById("inputCargo");
+        const montoAbono = parseFloat(document.getElementById("inputAbono").value);
+        const montoCargo = parseFloat(document.getElementById("inputCargo").value) || 0;
         const inputFecha = document.getElementById("inputFechaPago");
-        const montoAbono = parseFloat(inputAbono.value);
-        const montoCargo = parseFloat(inputCargo.value) || 0;
-        
+
         if (isNaN(montoAbono) || montoAbono <= 0) {
-            alert("Monto no válido.");
+            alert("Monto inválido.");
             return;
         }
 
-        let fechaFormateada = "";
+        let fechaTxt = "";
         if (inputFecha.value) {
-            const partes = inputFecha.value.split("-");
-            fechaFormateada = `${partes[2]}/${partes[1]}`;
+            const p = inputFecha.value.split("-");
+            fechaTxt = `${p[2]}/${p[1]}`;
         } else {
-            const hoy = new Date();
-            fechaFormateada = String(hoy.getDate()).padStart(2, '0') + '/' + String(hoy.getMonth() + 1).padStart(2, '0');
+            const h = new Date();
+            fechaTxt = `${String(h.getDate()).padStart(2, '0')}/${String(h.getMonth() + 1).padStart(2, '0')}`;
         }
 
-        const nuevoHistorial = [...cliente.historialPagos, {
+        const nuevoHistorial = [...(cliente.historialPagos || []), {
             abono: montoAbono,
             cargo: montoCargo,
-            fecha: fechaFormateada
+            fecha: fechaTxt
         }];
 
         try {
-            const clienteRef = doc(db, "clientes", cliente.id);
-            await updateDoc(clienteRef, { historialPagos: nuevoHistorial });
-            inputAbono.value = "";
-            inputCargo.value = "0";
+            const ref = doc(db, "clientes", cliente.id);
+            await updateDoc(ref, { historialPagos: nuevoHistorial });
+            document.getElementById("inputAbono").value = "";
+            document.getElementById("inputCargo").value = "0";
         } catch (error) {
-            console.error("Error al registrar: ", error);
+            console.error("Error al registrar pago: ", error);
         }
     }
 
@@ -744,24 +766,20 @@
 
     function compartirPorWhatsApp() {
         const cliente = clientesBD[clienteSeleccionadoIndex];
-        let totalPagado = cliente.historialPagos.reduce((sum, p) => sum + p.abono, 0);
-        let totalCargosHistorial = cliente.historialPagos.reduce((sum, p) => sum + p.cargo, 0);
-        let saldoActual = cliente.precio + totalCargosHistorial - totalPagado;
+        let totalPagado = (cliente.historialPagos || []).reduce((sum, p) => sum + p.abono, 0);
+        let totalCargos = (cliente.historialPagos || []).reduce((sum, p) => sum + p.cargo, 0);
+        let saldoActual = cliente.precio + totalCargos - totalPagado;
 
-        const urlActual = window.location.origin + window.location.pathname;
-        const enlaceCliente = `${urlActual}?folio=${cliente.folio}&modo=cliente`;
-
+        const url = `${window.location.origin}${window.location.pathname}?folio=${cliente.folio}&modo=cliente`;
         const mensaje = `Hola *${cliente.nombre}*, te compartimos tu estado de cuenta en DISTINTA.COM.\n\n` +
                         `🔹 *Crédito N°:* ${cliente.folio}\n` +
-                        `🔹 *Artículo:* ${cliente.articulo}\n` +
-                        `🔹 *Zona:* ${cliente.zona || 'Local'}\n` +
+                        `🔹 *Concepto:* ${cliente.articulo}\n` +
                         `🔹 *Saldo Restante:* ${formatearDinero(saldoActual)}\n\n` +
-                        `Revisa tu historial aquí: ${enlaceCliente}`;
+                        `Revisa tu historial aquí: ${url}`;
 
         window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(mensaje)}`, '_blank');
     }
 
-    // PASO TÉCNICO 4: Verificación segura del enlace que abre el cliente
     function verificarPermisosAcceso() {
         const parametros = new URLSearchParams(window.location.search);
         const modo = parametros.get("modo");
@@ -770,13 +788,11 @@
         if (modo === "cliente" && folioBuscado && clientesBD.length > 0) {
             const index = clientesBD.findIndex(c => c.folio === folioBuscado);
             if (index !== -1) {
-                // Se encontró al cliente: Ocultamos el mensaje de carga y mostramos la tarjeta azul
                 const panelCarga = document.getElementById("pantallaCargandoCliente");
                 if (panelCarga) panelCarga.classList.add("d-none");
 
                 seleccionarCliente(index);
 
-                // Ocultamos todos los controles administrativos
                 document.getElementById("seccionAdmin").style.display = "none";
                 document.getElementById("controlesEdicionAdmin").style.display = "none";
                 document.getElementById("btnVolver").style.display = "none";
@@ -785,6 +801,7 @@
         }
     }
 
+    // Exposición de funciones al entorno global
     window.registrarCliente = registrarCliente;
     window.filtrarClientes = filtrarClientes;
     window.seleccionarCliente = seleccionarCliente;
@@ -793,9 +810,7 @@
     window.agregarPagoAClienteActual = agregarPagoAClienteActual;
     window.mostrarBuscador = mostrarBuscador;
     window.compartirPorWhatsApp = compartirPorWhatsApp;
-    window.consultarPagosRealizados = consultarPagosRealizados;
-    window.consultarRetrasosPendientes = consultarRetrasosPendientes;
-    window.consultarClientesSinPagoEstaSemana = consultarClientesSinPagoEstaSemana;
+    window.ajustarMetaManual = ajustarMetaManual;
 </script>
 
 </body>
