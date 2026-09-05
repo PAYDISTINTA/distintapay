@@ -19,7 +19,7 @@
         .card-kpi { border: none; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.06); }
         .barra-progreso-lg { height: 24px; border-radius: 12px; font-weight: bold; font-size: 0.9rem; }
 
-        /* DOCUMENTACIÓN: Evita que el cliente vea el panel de control durante la carga */
+        /* DOCUMENTACIÓN: Evita que el cliente vea el panel de control durante la carga inicial */
         html.es-cliente #vistaBusqueda {
             display: none !important;
         }
@@ -153,13 +153,14 @@
             </div>
         </div>
 
-        <!-- NUEVA SECCIÓN: TABLERO DE ESTADÍSTICAS Y CONTROL SEMANAL INTEGRADO -->
+        <!-- SECCIÓN: TABLERO DE ESTADÍSTICAS (CICLO VIERNES A JUEVES) -->
         <div class="col-12 mt-3">
             <div class="seccion-dashboard p-4 shadow-sm">
                 
                 <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2 border-bottom pb-3">
                     <div>
-                        <h4 class="fw-bold text-dark mb-0">📊 Estadísticas y Control Semanal (Sábado a Jueves)</h4>
+                        <!-- DOCUMENTACIÓN: Título actualizado reflejando el ciclo de Viernes a Jueves -->
+                        <h4 class="fw-bold text-dark mb-0">📊 Estadísticas y Control Semanal (Viernes a Jueves)</h4>
                         <small class="text-muted">Métricas consolidadas en tiempo real desde Firestore</small>
                     </div>
                     <div class="d-flex align-items-center gap-2">
@@ -217,8 +218,8 @@
                     </div>
                 </div>
 
-                <!-- TABLA DIARIA DE SÁBADO A JUEVES -->
-                <h6 class="fw-bold text-dark mb-2">Desglose Diario de Cobros (Ciclo Activo)</h6>
+                <!-- TABLA DIARIA DE VIERNES A JUEVES -->
+                <h6 class="fw-bold text-dark mb-2">Desglose Diario de Cobros (Ciclo Activo: Viernes a Jueves)</h6>
                 <div class="table-responsive">
                     <table class="table table-bordered table-striped text-center align-middle mb-0">
                         <thead class="table-dark">
@@ -230,7 +231,7 @@
                             </tr>
                         </thead>
                         <tbody id="cuerpoTablaDias">
-                            <!-- Filas generadas por JavaScript -->
+                            <!-- Filas generadas por JavaScript con inicio en Viernes -->
                         </tbody>
                     </table>
                 </div>
@@ -368,21 +369,32 @@
         return new Date(2026, mes, dia);
     }
 
-    // DOCUMENTACIÓN: Calcula los cortes del ciclo de Sábado a Jueves
+    // DOCUMENTACIÓN EXHAUSTIVA:
+    // Función que calcula el rango de fechas iniciando en VIERNES (00:00:00) y terminando en JUEVES (23:59:59)
     function obtenerRangoCiclo(offsetSemanas = 0) {
         const hoy = new Date();
-        const diaSemana = hoy.getDay(); // 0: Dom, 1: Lun, ..., 6: Sáb
-        const diasDesdeSabado = (diaSemana + 1) % 7;
+        const diaSemana = hoy.getDay(); // 0: Dom, 1: Lun, 2: Mar, 3: Mié, 4: Jue, 5: Vie, 6: Sáb
 
-        let sabadoInicio = new Date(hoy);
-        sabadoInicio.setDate(hoy.getDate() - diasDesdeSabado - (offsetSemanas * 7));
-        sabadoInicio.setHours(0, 0, 0, 0);
+        // Cálculo de días transcurridos desde el último Viernes:
+        // Si hoy es Viernes (5) -> 0 días
+        // Si hoy es Sábado (6) -> 1 día
+        // Si hoy es Domingo (0) -> 2 días
+        // Si hoy es Lunes (1) -> 3 días
+        // Si hoy es Martes (2) -> 4 días
+        // Si hoy es Miércoles (3) -> 5 días
+        // Si hoy es Jueves (4) -> 6 días
+        let diasDesdeViernes = diaSemana >= 5 ? diaSemana - 5 : diaSemana + 2;
 
-        let juevesFin = new Date(sabadoInicio);
-        juevesFin.setDate(sabadoInicio.getDate() + 6);
+        let viernesInicio = new Date(hoy);
+        viernesInicio.setDate(hoy.getDate() - diasDesdeViernes - (offsetSemanas * 7));
+        viernesInicio.setHours(0, 0, 0, 0);
+
+        // El Jueves de cierre se encuentra exactamente 6 días después del Viernes de inicio
+        let juevesFin = new Date(viernesInicio);
+        juevesFin.setDate(viernesInicio.getDate() + 6);
         juevesFin.setHours(23, 59, 59, 999);
 
-        return { inicio: sabadoInicio, fin: juevesFin };
+        return { inicio: viernesInicio, fin: juevesFin };
     }
 
     // Sincronización en tiempo real con Firestore
@@ -479,7 +491,8 @@
         if (lblTotal) lblTotal.innerText = totalClientesListados;
     }
 
-    // DOCUMENTACIÓN: Procesa las estadísticas del ciclo Sábado a Jueves y Metas
+    // DOCUMENTACIÓN EXHAUSTIVA:
+    // Motor estadístico ajustado para procesar pagos de Viernes a Jueves
     function procesarMetricas() {
         let totalSemanaActual = 0;
         let abonosSemanaActual = 0;
@@ -490,10 +503,13 @@
         let totalPrestamos = 0;
         let abonosPrestamos = 0;
 
+        // Obtención de rangos basados en Viernes a Jueves
         const cicloActual = obtenerRangoCiclo(0);
         const cicloAnterior = obtenerRangoCiclo(1);
 
+        // Estructura de mapeo diario con el Viernes (día 5) completamente habilitado
         const diasSemanaMap = {
+            5: { nombre: "Viernes", total: 0, conteo: 0 },
             6: { nombre: "Sábado", total: 0, conteo: 0 },
             0: { nombre: "Domingo", total: 0, conteo: 0 },
             1: { nombre: "Lunes", total: 0, conteo: 0 },
@@ -511,7 +527,7 @@
             (cliente.historialPagos || []).forEach(pago => {
                 const fPago = parsearFechaTexto(pago.fecha);
 
-                // Pagos del ciclo en curso
+                // Verificación de abonos dentro del ciclo actual (Viernes 00:00 a Jueves 23:59)
                 if (fPago >= cicloActual.inicio && fPago <= cicloActual.fin) {
                     totalSemanaActual += pago.abono;
                     abonosSemanaActual++;
@@ -531,7 +547,7 @@
                     }
                 }
 
-                // Pagos del ciclo previo para comparativa
+                // Verificación de abonos dentro del ciclo anterior inmediato
                 if (fPago >= cicloAnterior.inicio && fPago <= cicloAnterior.fin) {
                     totalSemanaAnterior += pago.abono;
                 }
@@ -565,10 +581,10 @@
         barra.style.width = `${porcentajeMeta}%`;
         barra.innerText = `${porcentajeMeta}%`;
 
-        // Llenado de la tabla diaria
+        // Llenado de la tabla diaria en orden cronológico: Viernes a Jueves
         const cuerpoTabla = document.getElementById("cuerpoTablaDias");
         cuerpoTabla.innerHTML = "";
-        const ordenDias = [6, 0, 1, 2, 3, 4]; // Sábado a Jueves
+        const ordenDias = [5, 6, 0, 1, 2, 3, 4]; // 5=Viernes, 6=Sábado, 0=Domingo, 1=Lunes, 2=Martes, 3=Miércoles, 4=Jueves
 
         ordenDias.forEach(numDia => {
             const dato = diasSemanaMap[numDia];
