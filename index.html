@@ -18,8 +18,20 @@
         .seccion-dashboard { background-color: #ffffff; border-radius: 10px; border: 1px solid #dee2e6; }
         .card-kpi { border: none; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.06); }
         .barra-progreso-lg { height: 24px; border-radius: 12px; font-weight: bold; font-size: 0.9rem; }
+        .fila-liquidacion { cursor: pointer; transition: background-color 0.2s; }
+        .fila-liquidacion:hover { background-color: #f1f7ff; }
 
-        /* DOCUMENTACIÓN: Evita que el cliente vea el panel de control durante la carga inicial */
+        /* Estilos de impresión limpia */
+        @media print {
+            body { background-color: #ffffff !important; }
+            #vistaBusqueda > div:not(#seccionLiquidacionContenedor) { display: none !important; }
+            #pantallaCargandoCliente, #vistaTarjeta, .no-print { display: none !important; }
+            #seccionLiquidacionContenedor { margin-top: 0 !important; padding: 0 !important; border: none !important; box-shadow: none !important; }
+            .table-primary { background-color: #dee2e6 !important; color: black !important; }
+            #contenedorTablaLiquidacion, #contenedorTablaDias { display: block !important; }
+        }
+
+        /* Evita que el cliente vea el panel de control durante la carga inicial */
         html.es-cliente #vistaBusqueda {
             display: none !important;
         }
@@ -46,7 +58,7 @@
         <p class="text-muted small">DISTINTA.COM - Servicio a Domicilio</p>
     </div>
 
-    <!-- VISTA 1: PANEL ADMINISTRATIVO Y TABLERO ESTADÍSTICO INTEGRADO -->
+    <!-- VISTA 1: PANEL ADMINISTRATIVO, TABLERO Y RELACIÓN DE SALDOS -->
     <div id="vistaBusqueda" class="row g-4">
         
         <!-- FORMULARIO DE ALTA DE CLIENTE -->
@@ -153,13 +165,12 @@
             </div>
         </div>
 
-        <!-- SECCIÓN: TABLERO DE ESTADÍSTICAS (CICLO VIERNES A JUEVES) -->
+        <!-- SECCIÓN DE ESTADÍSTICAS Y CONTROL SEMANAL (VIERNES A JUEVES) -->
         <div class="col-12 mt-3">
             <div class="seccion-dashboard p-4 shadow-sm">
                 
                 <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2 border-bottom pb-3">
                     <div>
-                        <!-- DOCUMENTACIÓN: Título actualizado reflejando el ciclo de Viernes a Jueves -->
                         <h4 class="fw-bold text-dark mb-0">📊 Estadísticas y Control Semanal (Viernes a Jueves)</h4>
                         <small class="text-muted">Métricas consolidadas en tiempo real desde Firestore</small>
                     </div>
@@ -218,22 +229,81 @@
                     </div>
                 </div>
 
-                <!-- TABLA DIARIA DE VIERNES A JUEVES -->
-                <h6 class="fw-bold text-dark mb-2">Desglose Diario de Cobros (Ciclo Activo: Viernes a Jueves)</h6>
-                <div class="table-responsive">
-                    <table class="table table-bordered table-striped text-center align-middle mb-0">
-                        <thead class="table-dark">
-                            <tr>
-                                <th>DÍA DE COBRO</th>
-                                <th>INGRESOS REGISTRADOS</th>
-                                <th>CANTIDAD DE ABONOS</th>
-                                <th>APORTE AL CICLO (%)</th>
-                            </tr>
-                        </thead>
-                        <tbody id="cuerpoTablaDias">
-                            <!-- Filas generadas por JavaScript con inicio en Viernes -->
-                        </tbody>
-                    </table>
+                <!-- TABLA DIARIA DE VIERNES A JUEVES CONTRAÍDA POR DEFECTO -->
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="fw-bold text-dark mb-0">Desglose Diario de Cobros (Ciclo Activo: Viernes a Jueves)</h6>
+                    <!-- DOCUMENTACIÓN: Botón configurado para iniciar en estado contraído -->
+                    <button class="btn btn-outline-secondary btn-sm fw-bold shadow-sm" type="button" data-bs-toggle="collapse" data-bs-target="#contenedorTablaDias" aria-expanded="false" aria-controls="contenedorTablaDias" id="btnToggleDias">
+                        🔽 Mostrar Desglose
+                    </button>
+                </div>
+
+                <!-- DOCUMENTACIÓN: Contenedor con clase 'collapse' sin 'show' para iniciar contraído -->
+                <div class="collapse" id="contenedorTablaDias">
+                    <div class="table-responsive mt-2">
+                        <table class="table table-bordered table-striped text-center align-middle mb-0">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>DÍA DE COBRO</th>
+                                    <th>INGRESOS REGISTRADOS</th>
+                                    <th>CANTIDAD DE ABONOS</th>
+                                    <th>APORTE AL CICLO (%)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="cuerpoTablaDias">
+                                <!-- Filas generadas por JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- SECCIÓN: RELACIÓN DE CLIENTES (CONTRAÍDA POR DEFECTO) -->
+        <div class="col-12 mt-3" id="seccionLiquidacionContenedor">
+            <div class="seccion-dashboard p-4 shadow-sm border-start border-primary border-4">
+                
+                <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2 border-bottom pb-3">
+                    <div>
+                        <h4 class="fw-bold text-dark mb-0">🎯 Cuentas Próximas a Liquidar (Saldo ≤ $1,500.00)</h4>
+                        <small class="text-muted">Ordenadas descendentemente de mayor a menor saldo (haz clic en cualquier fila para abrir la tarjeta)</small>
+                    </div>
+                    
+                    <div class="d-flex align-items-center gap-2 no-print flex-wrap">
+                        <span class="badge bg-primary fs-6 px-3 py-2">
+                            Total: <span id="lblTotalMenores1500">0</span>
+                        </span>
+                        
+                        <button class="btn btn-outline-primary btn-sm fw-bold shadow-sm" type="button" data-bs-toggle="collapse" data-bs-target="#contenedorTablaLiquidacion" aria-expanded="false" aria-controls="contenedorTablaLiquidacion" id="btnToggleLiquidacion">
+                            🔽 Mostrar Lista
+                        </button>
+
+                        <button class="btn btn-outline-success btn-sm fw-bold shadow-sm" onclick="exportarLiquidacionesCSV()">
+                            📥 Exportar a Excel (CSV)
+                        </button>
+                        <button class="btn btn-outline-dark btn-sm fw-bold shadow-sm" onclick="imprimirListaLiquidacion()">
+                            🖨️ Imprimir Lista
+                        </button>
+                    </div>
+                </div>
+
+                <div class="collapse" id="contenedorTablaLiquidacion">
+                    <div class="table-responsive mt-2">
+                        <table class="table table-bordered table-striped align-middle mb-0 text-center">
+                            <thead class="table-primary text-dark">
+                                <tr>
+                                    <th style="width: 15%;">N° CLIENTE / FOLIO</th>
+                                    <th style="width: 35%;" class="text-start">NOMBRE COMPLETO</th>
+                                    <th style="width: 30%;" class="text-start">ARTÍCULO / CONCEPTO</th>
+                                    <th style="width: 20%;">SALDO PENDIENTE</th>
+                                </tr>
+                            </thead>
+                            <tbody id="cuerpoTablaMenores1500">
+                                <!-- Filas inyectadas automáticamente por JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
             </div>
@@ -321,6 +391,9 @@
 
 </div>
 
+<!-- Bootstrap 5 JavaScript Bundle -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
 <!-- Firebase Firestore Modular SDK v9 -->
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
@@ -342,6 +415,7 @@
     const db = getFirestore(app);
 
     let clientesBD = [];
+    let clientesFiltradosLiquidacion = [];
     let clienteSeleccionadoIndex = null;
     let editando = false;
 
@@ -358,6 +432,32 @@
         if (panelCarga) panelCarga.classList.remove("d-none");
     }
 
+    // DOCUMENTACIÓN: Alternador dinámico del texto para el botón de liquidación
+    const contenedorColapsableLiq = document.getElementById('contenedorTablaLiquidacion');
+    const btnToggleLiq = document.getElementById('btnToggleLiquidacion');
+
+    if (contenedorColapsableLiq && btnToggleLiq) {
+        contenedorColapsableLiq.addEventListener('hidden.bs.collapse', () => {
+            btnToggleLiq.innerText = '🔽 Mostrar Lista';
+        });
+        contenedorColapsableLiq.addEventListener('shown.bs.collapse', () => {
+            btnToggleLiq.innerText = '🔼 Ocultar Lista';
+        });
+    }
+
+    // DOCUMENTACIÓN: Alternador dinámico del texto para el botón de la tabla diaria
+    const contenedorColapsableDias = document.getElementById('contenedorTablaDias');
+    const btnToggleDias = document.getElementById('btnToggleDias');
+
+    if (contenedorColapsableDias && btnToggleDias) {
+        contenedorColapsableDias.addEventListener('hidden.bs.collapse', () => {
+            btnToggleDias.innerText = '🔽 Mostrar Desglose';
+        });
+        contenedorColapsableDias.addEventListener('shown.bs.collapse', () => {
+            btnToggleDias.innerText = '🔼 Ocultar Desglose';
+        });
+    }
+
     function formatearDinero(cantidad) {
         return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(cantidad);
     }
@@ -369,27 +469,17 @@
         return new Date(2026, mes, dia);
     }
 
-    // DOCUMENTACIÓN EXHAUSTIVA:
-    // Función que calcula el rango de fechas iniciando en VIERNES (00:00:00) y terminando en JUEVES (23:59:59)
+    // DOCUMENTACIÓN: Función que calcula el rango de Viernes a Jueves
     function obtenerRangoCiclo(offsetSemanas = 0) {
         const hoy = new Date();
-        const diaSemana = hoy.getDay(); // 0: Dom, 1: Lun, 2: Mar, 3: Mié, 4: Jue, 5: Vie, 6: Sáb
+        const diaSemana = hoy.getDay();
 
-        // Cálculo de días transcurridos desde el último Viernes:
-        // Si hoy es Viernes (5) -> 0 días
-        // Si hoy es Sábado (6) -> 1 día
-        // Si hoy es Domingo (0) -> 2 días
-        // Si hoy es Lunes (1) -> 3 días
-        // Si hoy es Martes (2) -> 4 días
-        // Si hoy es Miércoles (3) -> 5 días
-        // Si hoy es Jueves (4) -> 6 días
         let diasDesdeViernes = diaSemana >= 5 ? diaSemana - 5 : diaSemana + 2;
 
         let viernesInicio = new Date(hoy);
         viernesInicio.setDate(hoy.getDate() - diasDesdeViernes - (offsetSemanas * 7));
         viernesInicio.setHours(0, 0, 0, 0);
 
-        // El Jueves de cierre se encuentra exactamente 6 días después del Viernes de inicio
         let juevesFin = new Date(viernesInicio);
         juevesFin.setDate(viernesInicio.getDate() + 6);
         juevesFin.setHours(23, 59, 59, 999);
@@ -416,6 +506,7 @@
         }
         filtrarClientes();
         procesarMetricas();
+        generarRelacionMenores1500();
         verificarPermisosAcceso();
     });
 
@@ -491,8 +582,91 @@
         if (lblTotal) lblTotal.innerText = totalClientesListados;
     }
 
-    // DOCUMENTACIÓN EXHAUSTIVA:
-    // Motor estadístico ajustado para procesar pagos de Viernes a Jueves
+    // DOCUMENTACIÓN: Genera la relación con clientes cuyo saldo sea <= $1,500.00 de mayor a menor
+    function generarRelacionMenores1500() {
+        const cuerpoTabla = document.getElementById("cuerpoTablaMenores1500");
+        const lblTotal = document.getElementById("lblTotalMenores1500");
+        if (!cuerpoTabla) return;
+
+        cuerpoTabla.innerHTML = "";
+
+        let clientesConSaldo = clientesBD.map((cliente, indexOriginal) => {
+            let totalPagado = (cliente.historialPagos || []).reduce((sum, p) => sum + p.abono, 0);
+            let totalCargos = (cliente.historialPagos || []).reduce((sum, p) => sum + p.cargo, 0);
+            let saldoActual = cliente.precio + totalCargos - totalPagado;
+            
+            return {
+                indexOriginal: indexOriginal,
+                folio: cliente.folio,
+                nombre: cliente.nombre,
+                articulo: cliente.articulo || "Sin especificar",
+                saldo: saldoActual
+            };
+        });
+
+        clientesFiltradosLiquidacion = clientesConSaldo.filter(c => c.saldo <= 1500 && c.saldo >= 0);
+        clientesFiltradosLiquidacion.sort((a, b) => b.saldo - a.saldo);
+
+        if (lblTotal) {
+            lblTotal.innerText = clientesFiltradosLiquidacion.length;
+        }
+
+        if (clientesFiltradosLiquidacion.length === 0) {
+            cuerpoTabla.innerHTML = `<tr><td colspan="4" class="text-muted py-3">No hay clientes con saldo igual o menor a $1,500.00 en este momento.</td></tr>`;
+            return;
+        }
+
+        clientesFiltradosLiquidacion.forEach(item => {
+            const saldoHtml = item.saldo === 0 
+                ? `<span class="badge bg-success fs-6">LIQUIDADO ($0.00)</span>` 
+                : `<span class="fw-bold text-danger fs-6">${formatearDinero(item.saldo)}</span>`;
+
+            let fila = `<tr class="fila-liquidacion" onclick="seleccionarCliente(${item.indexOriginal})" title="Clic para abrir tarjeta del cliente">
+                <td><span class="badge bg-dark fs-6">N° ${item.folio}</span></td>
+                <td class="text-start"><strong>${item.nombre}</strong></td>
+                <td class="text-start text-secondary"><small>${item.articulo}</small></td>
+                <td>${saldoHtml}</td>
+            </tr>`;
+            cuerpoTabla.innerHTML += fila;
+        });
+    }
+
+    // DOCUMENTACIÓN: Genera y descarga el archivo CSV para Excel
+    function exportarLiquidacionesCSV() {
+        if (!clientesFiltradosLiquidacion || clientesFiltradosLiquidacion.length === 0) {
+            alert("No hay clientes en la lista para exportar.");
+            return;
+        }
+
+        let csvContenido = "\uFEFF"; 
+        csvContenido += "Folio,Nombre Completo,Articulo,Saldo\n";
+
+        clientesFiltradosLiquidacion.forEach(c => {
+            let nombreLimpio = `"${c.nombre.replace(/"/g, '""')}"`;
+            let articuloLimpio = `"${c.articulo.replace(/"/g, '""')}"`;
+            csvContenido += `"${c.folio}",${nombreLimpio},${articuloLimpio},${c.saldo.toFixed(2)}\n`;
+        });
+
+        const blob = new Blob([csvContenido], { type: 'text/csv;charset=utf-8;' });
+        const enlace = document.createElement("a");
+        const fechaHoy = new Date().toISOString().slice(0, 10);
+        enlace.href = URL.createObjectURL(blob);
+        enlace.setAttribute("download", `clientes_saldo_menor_1500_${fechaHoy}.csv`);
+        document.body.appendChild(enlace);
+        enlace.click();
+        document.body.removeChild(enlace);
+    }
+
+    // DOCUMENTACIÓN: Imprime la lista completa de liquidación
+    function imprimirListaLiquidacion() {
+        if (!clientesFiltradosLiquidacion || clientesFiltradosLiquidacion.length === 0) {
+            alert("No hay clientes en la lista para imprimir.");
+            return;
+        }
+        window.print();
+    }
+
+    // Motor de Estadísticas Semanales (Viernes a Jueves)
     function procesarMetricas() {
         let totalSemanaActual = 0;
         let abonosSemanaActual = 0;
@@ -503,11 +677,9 @@
         let totalPrestamos = 0;
         let abonosPrestamos = 0;
 
-        // Obtención de rangos basados en Viernes a Jueves
         const cicloActual = obtenerRangoCiclo(0);
         const cicloAnterior = obtenerRangoCiclo(1);
 
-        // Estructura de mapeo diario con el Viernes (día 5) completamente habilitado
         const diasSemanaMap = {
             5: { nombre: "Viernes", total: 0, conteo: 0 },
             6: { nombre: "Sábado", total: 0, conteo: 0 },
@@ -527,7 +699,6 @@
             (cliente.historialPagos || []).forEach(pago => {
                 const fPago = parsearFechaTexto(pago.fecha);
 
-                // Verificación de abonos dentro del ciclo actual (Viernes 00:00 a Jueves 23:59)
                 if (fPago >= cicloActual.inicio && fPago <= cicloActual.fin) {
                     totalSemanaActual += pago.abono;
                     abonosSemanaActual++;
@@ -547,14 +718,12 @@
                     }
                 }
 
-                // Verificación de abonos dentro del ciclo anterior inmediato
                 if (fPago >= cicloAnterior.inicio && fPago <= cicloAnterior.fin) {
                     totalSemanaAnterior += pago.abono;
                 }
             });
         });
 
-        // Actualización de KPIs en pantalla
         document.getElementById("kpiCobradoSemana").innerText = formatearDinero(totalSemanaActual);
         document.getElementById("kpiTransaccionesSemana").innerText = `${abonosSemanaActual} abonos registrados`;
         document.getElementById("kpiCobradoSemanaAnterior").innerText = formatearDinero(totalSemanaAnterior);
@@ -567,7 +736,6 @@
         document.getElementById("kpiTotalPrestamos").innerText = formatearDinero(totalPrestamos);
         document.getElementById("kpiDetallePrestamos").innerText = `${abonosPrestamos} abonos`;
 
-        // Cálculo contra Meta Global
         const metaGlobal = parseFloat(document.getElementById("inputMetaManual").value) || 0;
         document.getElementById("lblMeta75").innerText = formatearDinero(metaGlobal * 0.75);
         document.getElementById("lblMeta80").innerText = formatearDinero(metaGlobal * 0.80);
@@ -581,10 +749,9 @@
         barra.style.width = `${porcentajeMeta}%`;
         barra.innerText = `${porcentajeMeta}%`;
 
-        // Llenado de la tabla diaria en orden cronológico: Viernes a Jueves
         const cuerpoTabla = document.getElementById("cuerpoTablaDias");
         cuerpoTabla.innerHTML = "";
-        const ordenDias = [5, 6, 0, 1, 2, 3, 4]; // 5=Viernes, 6=Sábado, 0=Domingo, 1=Lunes, 2=Martes, 3=Miércoles, 4=Jueves
+        const ordenDias = [5, 6, 0, 1, 2, 3, 4];
 
         ordenDias.forEach(numDia => {
             const dato = diasSemanaMap[numDia];
@@ -623,6 +790,7 @@
 
         document.getElementById("vistaBusqueda").classList.add("d-none");
         document.getElementById("vistaTarjeta").classList.remove("d-none");
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function restaurarVistaDatosFijos(cliente) {
@@ -827,6 +995,8 @@
     window.mostrarBuscador = mostrarBuscador;
     window.compartirPorWhatsApp = compartirPorWhatsApp;
     window.ajustarMetaManual = ajustarMetaManual;
+    window.exportarLiquidacionesCSV = exportarLiquidacionesCSV;
+    window.imprimirListaLiquidacion = imprimirListaLiquidacion;
 </script>
 
 </body>
