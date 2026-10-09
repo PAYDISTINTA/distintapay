@@ -304,7 +304,7 @@
                             <span class="badge bg-primary fs-6" id="lblPorcentajeAlcanzado">0%</span>
                         </div>
                         <div class="progress barra-progreso-lg mb-3">
-                            <div id="barraMetaGlobal" class="progress-bar progress-bar-striped progress-bar-animated bg-success" style="width: 0%">0%</div>
+                            <div id="barraMetaGlobal" class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" style="width: 0%">0%</div>
                         </div>
                         <div class="row g-2 text-center text-muted small">
                             <div class="col-3 border-end"><strong>75%:</strong> <span id="lblMeta75" class="fw-bold text-dark">$0.00</span></div>
@@ -777,22 +777,28 @@
                     let cuota = c.abonoSemanal || 0;
                     let montoAtraso = c.semanasConsecutivas * cuota;
 
+                    // DOCUMENTACIÓN: Ajuste de mensaje de WhatsApp
+                    // Si el cliente está al corriente, se eliminan tanto la frase de cuota programada como la de confirmación de pago
                     let detalleAtrasoTexto = "";
+                    let fraseConfirmacion = "";
+
                     if (c.semanasConsecutivas > 0) {
-                        detalleAtrasoTexto = `Presenta un atraso de *${c.semanasConsecutivas} semana(s)* con un importe pendiente de *${formatearDinero(montoAtraso)}*.\n`;
+                        detalleAtrasoTexto = `Presenta un atraso de *${c.semanasConsecutivas} semana(s)* con un importe pendiente de *${formatearDinero(montoAtraso)}*.\n\n`;
+                        fraseConfirmacion = `Agradecemos confirmar la fecha de su pago. Para cualquier duda o aclaración, por favor contáctenos.`;
                     } else {
-                        detalleAtrasoTexto = `Su cuota programada de la semana es de *${formatearDinero(cuota)}*.\n`;
+                        detalleAtrasoTexto = ""; // Eliminado el texto de cuota programada
+                        fraseConfirmacion = "";  // No se solicita confirmación
                     }
 
                     const msgWhatsApp = `Hola *${c.nombre}*, le saludamos de DISTINTA.COM.\n\n` +
                                         `Le informamos el estado actual de su cuenta:\n` +
                                         `🔹 *Crédito N°:* ${c.folio}\n` +
                                         `🔹 *Concepto:* ${c.articulo}\n` +
-                                        `🔹 *Saldo Restante:* ${formatearDinero(c.saldoActual)}\n` +
-                                        detalleAtrasoTexto + `\n` +
-                                        `Agradecemos confirmar la fecha de su pago. Para cualquier duda o aclaración, por favor contáctenos.`;
+                                        `🔹 *Saldo Restante:* ${formatearDinero(c.saldoActual)}\n\n` +
+                                        detalleAtrasoTexto +
+                                        fraseConfirmacion;
 
-                    const urlWha = `https://api.whatsapp.com/send?text=${encodeURIComponent(msgWhatsApp)}`;
+                    const urlWha = `https://api.whatsapp.com/send?text=${encodeURIComponent(msgWhatsApp.trim())}`;
 
                     reporteDetalladoExportar.push({
                         fecha: c.fechaExacta,
@@ -860,7 +866,7 @@
         });
     }
 
-    // EXPORTACIÓN A EXCEL: Desglose por método en cada corte diario y Gran Total al final
+    // EXPORTACIÓN A EXCEL: Desglose diario por método y Gran Total al final
     function exportarControlDiarioCSV() {
         const clientesConPago = (reporteDetalladoExportar || []).filter(r => r.cobradoSemana > 0);
 
@@ -1488,6 +1494,8 @@
         document.getElementById("vistaBusqueda").classList.remove("d-none");
     }
 
+    // DOCUMENTACIÓN: Mensaje de WhatsApp individual sin solicitar confirmación si va al corriente
+    // y sin la frase de cuota programada
     function compartirPorWhatsApp() {
         const cliente = clientesBD[clienteSeleccionadoIndex];
         let totalPagado = (cliente.historialPagos || []).reduce((sum, p) => sum + p.abono, 0);
@@ -1510,19 +1518,23 @@
         let montoAtraso = semanasConsecutivas * cuota;
 
         let detalleAtrasoTexto = "";
+        let fraseConfirmacion = "";
+
         if (semanasConsecutivas > 0) {
-            detalleAtrasoTexto = `Presenta un atraso de *${semanasConsecutivas} semana(s)* con un importe pendiente de *${formatearDinero(montoAtraso)}*.\n`;
+            detalleAtrasoTexto = `Presenta un atraso de *${semanasConsecutivas} semana(s)* con un importe pendiente de *${formatearDinero(montoAtraso)}*.\n\n`;
+            fraseConfirmacion = `Agradecemos confirmar la fecha de su pago. Para cualquier duda o aclaración, por favor contáctenos.\n\n`;
         } else {
-            detalleAtrasoTexto = `Su cuota programada de la semana es de *${formatearDinero(cuota)}*.\n`;
+            detalleAtrasoTexto = ""; // Eliminado el texto de cuota programada
+            fraseConfirmacion = "";  // Omitido cuando no hay atraso
         }
 
         const url = `${window.location.origin}${window.location.pathname}?folio=${cliente.folio}&modo=cliente`;
         const mensaje = `Hola *${cliente.nombre}*, te compartimos tu estado de cuenta en DISTINTA.COM.\n\n` +
                         `🔹 *Crédito N°:* ${cliente.folio}\n` +
                         `🔹 *Concepto:* ${cliente.articulo}\n` +
-                        `🔹 *Saldo Restante:* ${formatearDinero(saldoActual)}\n` +
-                        detalleAtrasoTexto + `\n` +
-                        `Agradecemos confirmar la fecha de su pago. Para cualquier duda o aclaración, por favor contáctenos.\n\n` +
+                        `🔹 *Saldo Restante:* ${formatearDinero(saldoActual)}\n\n` +
+                        detalleAtrasoTexto +
+                        fraseConfirmacion +
                         `Revisa tu historial aquí: ${url}`;
 
         window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(mensaje)}`, '_blank');
