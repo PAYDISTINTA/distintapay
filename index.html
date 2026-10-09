@@ -3,41 +3,71 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Control de Créditos y Estadísticas - DISTINTA.COM</title>
-    <!-- Bootstrap 5 para garantizar una interfaz moderna y adaptativa en móviles y PC -->
+    <title>DISTINTA.COM - Panel de Control Integral</title>
+    <!-- Bootstrap 5 para interfaz responsiva optimizada para PC -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Librerías jsPDF y AutoTable para exportar reportes en PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+
     <style>
-        body { background-color: #eef2f7; font-family: sans-serif; }
+        body { background-color: #f0f4f8; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        
+        /* Barra de navegación de módulos para PC */
+        .nav-modulos {
+            background-color: #ffffff;
+            border-radius: 12px;
+            padding: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        .nav-modulos .nav-link {
+            font-weight: 600;
+            color: #495057;
+            border-radius: 8px;
+            padding: 10px 20px;
+            border: none;
+            transition: all 0.2s ease-in-out;
+        }
+        .nav-modulos .nav-link:hover {
+            background-color: #e9ecef;
+            color: #0056b3;
+        }
+        .nav-modulos .nav-link.active {
+            background-color: #0056b3 !important;
+            color: #ffffff !important;
+            box-shadow: 0 4px 8px rgba(0, 86, 179, 0.25);
+        }
+
+        .card-modulo {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+            background-color: #ffffff;
+        }
+
         .card-tarjeta-azul { border: 2px solid #0056b3; background-color: #e6f2ff; color: #111; }
         .header-negocio { border-bottom: 2px solid #0056b3; padding-bottom: 10px; }
-        .logo-negocio { max-height: 85px; width: auto; object-fit: contain; }
+        .logo-negocio { max-height: 80px; width: auto; object-fit: contain; }
         .tabla-pagos th { background-color: #0056b3 !important; color: white; text-align: center; font-size: 0.85rem; }
         .tabla-pagos td { text-align: center; vertical-align: middle; font-size: 0.85rem; background-color: #ffffff; }
         .lista-clientes-item { cursor: pointer; transition: background 0.2s; }
         .lista-clientes-item:hover { background-color: #d0e4ff; }
-        .seccion-dashboard { background-color: #ffffff; border-radius: 10px; border: 1px solid #dee2e6; }
         .card-kpi { border: none; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.06); }
         .barra-progreso-lg { height: 24px; border-radius: 12px; font-weight: bold; font-size: 0.9rem; }
         .fila-liquidacion { cursor: pointer; transition: background-color 0.2s; }
         .fila-liquidacion:hover { background-color: #f1f7ff; }
 
-        /* Estilos de impresión limpia */
         @media print {
             body { background-color: #ffffff !important; }
-            #vistaBusqueda > div:not(#seccionLiquidacionContenedor) { display: none !important; }
-            #pantallaCargandoCliente, #vistaTarjeta, .no-print { display: none !important; }
-            #seccionLiquidacionContenedor { margin-top: 0 !important; padding: 0 !important; border: none !important; box-shadow: none !important; }
-            .table-primary { background-color: #dee2e6 !important; color: black !important; }
-            #contenedorTablaLiquidacion, #contenedorTablaDias { display: block !important; }
+            #vistaBusqueda > div:not(#seccionReporteDetalladoContenedor) { display: none !important; }
+            #pantallaCargandoCliente, #vistaTarjeta, .nav-modulos, .no-print { display: none !important; }
+            .collapse { display: block !important; }
         }
 
-        /* Evita que el cliente vea el panel de control durante la carga inicial */
-        html.es-cliente #vistaBusqueda {
-            display: none !important;
-        }
+        html.es-cliente #vistaBusqueda { display: none !important; }
     </style>
 
-    <!-- Script ejecutado antes del renderizado para evitar parpadeos en modo cliente -->
     <script>
         const urlParamsLectura = new URLSearchParams(window.location.search);
         if (urlParamsLectura.get("modo") === "cliente") {
@@ -47,200 +77,245 @@
 </head>
 <body>
 
-<div class="container my-4">
+<div class="container-fluid px-4 my-3">
 
-    <!-- Indicador de espera visible únicamente cuando el cliente abre su enlace -->
+    <!-- Indicador de carga para clientes -->
     <div id="pantallaCargandoCliente" class="text-center py-5 d-none">
-        <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
-            <span class="visually-hidden">Cargando...</span>
-        </div>
+        <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status"></div>
         <h4 class="fw-bold text-dark mt-3">Cargando su estado de cuenta...</h4>
         <p class="text-muted small">DISTINTA.COM - Servicio a Domicilio</p>
     </div>
 
-    <!-- VISTA 1: PANEL ADMINISTRATIVO, TABLERO Y RELACIÓN DE SALDOS -->
-    <div id="vistaBusqueda" class="row g-4">
+    <!-- PANTALLA PRINCIPAL MODULAR -->
+    <div id="vistaBusqueda">
         
-        <!-- FORMULARIO DE ALTA DE CLIENTE -->
-        <div class="col-md-5">
-            <div class="card p-4 shadow-sm h-100">
-                <h4 class="fw-bold text-primary mb-3">➕ Registrar Nuevo Cliente</h4>
-                <form id="formNuevoCliente" onsubmit="registrarCliente(event)">
-                    <div class="mb-2">
-                        <label class="form-label small fw-bold">Número de Cliente / Folio</label>
-                        <input type="text" id="regNumero" class="form-control" placeholder="Ej: 123-D" required>
-                    </div>
-                    <div class="mb-2">
-                        <label class="form-label small fw-bold">Nombre Completo</label>
-                        <input type="text" id="regNombre" class="form-control" placeholder="Nombre del cliente" required>
-                    </div>
-                    <div class="mb-2">
-                        <label class="form-label small fw-bold">Dirección (Calle y Colonia)</label>
-                        <input type="text" id="regDireccion" class="form-control" placeholder="Av. Principal #123" required>
-                    </div>
-
-                    <!-- SELECTORES DE CATEGORÍA Y PERIODO -->
-                    <div class="row g-2 mb-2">
-                        <div class="col-6">
-                            <label class="form-label small fw-bold">Categoría</label>
-                            <select id="regCategoria" class="form-select" required>
-                                <option value="Artículos" selected>Artículos</option>
-                                <option value="Préstamos">Préstamos</option>
-                            </select>
-                        </div>
-                        <div class="col-6">
-                            <label class="form-label small fw-bold">Periodo</label>
-                            <select id="regPeriodo" class="form-select" required>
-                                <option value="Semanal" selected>Semanal</option>
-                                <option value="Quincenal">Quincenal</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <!-- ZONA Y DÍA DE COBRO -->
-                    <div class="row g-2 mb-2">
-                        <div class="col-6">
-                            <label class="form-label small fw-bold">Zona</label>
-                            <select id="regZona" class="form-select" required>
-                                <option value="" disabled selected>Selecciona...</option>
-                                <option value="Local">Local</option>
-                                <option value="Foránea">Foránea</option>
-                            </select>
-                        </div>
-                        <div class="col-6">
-                            <label class="form-label small fw-bold">Día de Cobro</label>
-                            <select id="regDiaCobro" class="form-select" required>
-                                <option value="" disabled selected>Día...</option>
-                                <option value="Viernes">Viernes</option>
-                                <option value="Sábado">Sábado</option>
-                                <option value="Domingo">Domingo</option>
-                                <option value="Lunes">Lunes</option>
-                                <option value="Martes">Martes</option>
-                                <option value="Miércoles">Miércoles</option>
-                                <option value="Jueves">Jueves</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="mb-2">
-                        <label class="form-label small fw-bold">Artículo / Servicio Específico</label>
-                        <input type="text" id="regArticulo" class="form-control" placeholder="Ej: Lavadora / Préstamo Efectivo" required>
-                    </div>
-
-                    <div class="row g-2 mb-3">
-                        <div class="col-4">
-                            <label class="form-label small fw-bold">Precio ($)</label>
-                            <input type="number" id="regPrecio" class="form-control" placeholder="0.00" required>
-                        </div>
-                        <div class="col-4">
-                            <label class="form-label small fw-bold">Cuota ($)</label>
-                            <input type="number" id="regAbono" class="form-control" placeholder="0.00" required>
-                        </div>
-                        <div class="col-4">
-                            <label class="form-label small fw-bold">Cargo Atraso</label>
-                            <input type="number" id="regCargoAtraso" class="form-control" placeholder="0.00" value="0">
-                        </div>
-                    </div>
-                    <button type="submit" class="btn btn-primary w-100 fw-bold">Guardar en Base de Datos</button>
-                </form>
+        <!-- ENCABEZADO SUPERIOR -->
+        <div class="d-flex justify-content-between align-items-center mb-3 bg-white p-3 rounded-3 shadow-sm border">
+            <div class="d-flex align-items-center">
+                <img src="distintacreditosconfondo.png" alt="Logo" class="logo-negocio me-3" onerror="this.style.opacity='0.4'">
+                <div>
+                    <h3 class="fw-bold text-dark mb-0">DISTINTA.COM</h3>
+                    <small class="text-muted">Sistema Administrativo y de Cobranza (Gestión de PC)</small>
+                </div>
+            </div>
+            <div class="text-end">
+                <span class="badge bg-primary fs-6 px-3 py-2">Clientes Activos: <span id="lblSumaTotalActiva">0</span></span>
             </div>
         </div>
 
-        <!-- LISTA Y BÚSQUEDA DE CUENTAS ACTIVAS -->
-        <div class="col-md-7">
-            <div class="card p-4 shadow-sm h-100">
-                <h3 class="fw-bold text-dark mb-1">DISTINTA.COM</h3>
-                <p class="text-muted small">Servicio a Domicilio Premium</p>
-                <div class="mb-3">
-                    <input type="text" id="inputBuscar" class="form-control form-control-lg" placeholder="🔍 Buscar por Folio o Nombre..." oninput="filtrarClientes()">
-                </div>
+        <!-- BARRA DE SELECCIÓN DE MÓDULOS -->
+        <ul class="nav nav-pills nav-modulos mb-4 d-flex justify-content-between" id="pills-tab" role="tablist">
+            <li class="nav-item flex-fill text-center" role="presentation">
+                <button class="nav-link w-100 active" id="tab-clientes-btn" data-bs-toggle="pill" data-bs-target="#modulo-clientes" type="button" role="tab">
+                    👥 Módulo 1: Clientes y Alta
+                </button>
+            </li>
+            <li class="nav-item flex-fill text-center" role="presentation">
+                <button class="nav-link w-100" id="tab-estadisticas-btn" data-bs-toggle="pill" data-bs-target="#modulo-estadisticas" type="button" role="tab">
+                    📊 Módulo 2: Estadísticas Semanales
+                </button>
+            </li>
+            <li class="nav-item flex-fill text-center" role="presentation">
+                <button class="nav-link w-100" id="tab-cobranza-btn" data-bs-toggle="pill" data-bs-target="#modulo-cobranza" type="button" role="tab">
+                    📋 Módulo 3: Control Diario de Cobro
+                </button>
+            </li>
+            <li class="nav-item flex-fill text-center" role="presentation">
+                <button class="nav-link w-100" id="tab-liquidacion-btn" data-bs-toggle="pill" data-bs-target="#modulo-liquidacion" type="button" role="tab">
+                    🎯 Módulo 4: Próximos a Liquidar (≤ $1,500)
+                </button>
+            </li>
+        </ul>
 
-                <div class="alert alert-info py-2 px-3 mb-2 d-flex justify-content-between align-items-center shadow-sm">
-                    <span class="fw-bold text-dark small">👥 TOTAL CLIENTES REGISTRADOS:</span>
-                    <span class="fw-bold text-primary fs-5" id="lblSumaTotalActiva">0</span>
-                </div>
+        <!-- CONTENIDO DE LOS MÓDULOS -->
+        <div class="tab-content" id="pills-tabContent">
 
-                <h5 class="fw-bold mt-3">Lista de Cuentas Activas</h5>
-                <div class="list-group shadow-sm overflow-auto" style="max-height: 275px;" id="listaClientesContainer"></div>
+            <!-- MÓDULO 1: CLIENTES Y ALTA -->
+            <div class="tab-pane fade show active" id="modulo-clientes" role="tabpanel">
+                <div class="row g-4">
+                    <!-- ALTA DE CLIENTE -->
+                    <div class="col-lg-5">
+                        <div class="card card-modulo p-4 h-100">
+                            <h4 class="fw-bold text-primary mb-3">➕ Registrar Nuevo Cliente</h4>
+                            <form id="formNuevoCliente" onsubmit="registrarCliente(event)">
+                                <div class="row g-2 mb-2">
+                                    <div class="col-4">
+                                        <label class="form-label small fw-bold">Folio / N°</label>
+                                        <input type="text" id="regNumero" class="form-control" placeholder="123" required>
+                                    </div>
+                                    <div class="col-8">
+                                        <label class="form-label small fw-bold">Nombre Completo</label>
+                                        <input type="text" id="regNombre" class="form-control" placeholder="Nombre del cliente" required>
+                                    </div>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label small fw-bold">Dirección Completa</label>
+                                    <input type="text" id="regDireccion" class="form-control" placeholder="Calle y Colonia" required>
+                                </div>
+                                <div class="row g-2 mb-2">
+                                    <div class="col-6">
+                                        <label class="form-label small fw-bold">Categoría</label>
+                                        <select id="regCategoria" class="form-select" required>
+                                            <option value="Artículos" selected>Artículos</option>
+                                            <option value="Préstamos">Préstamos</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label small fw-bold">Periodo</label>
+                                        <select id="regPeriodo" class="form-select" required>
+                                            <option value="Semanal" selected>Semanal</option>
+                                            <option value="Quincenal">Quincenal</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="row g-2 mb-2">
+                                    <div class="col-6">
+                                        <label class="form-label small fw-bold">Zona</label>
+                                        <select id="regZona" class="form-select" required>
+                                            <option value="Local" selected>Local</option>
+                                            <option value="Foránea">Foránea</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label small fw-bold">Día de Cobro Programado</label>
+                                        <select id="regDiaCobro" class="form-select" required>
+                                            <option value="Viernes" selected>Viernes</option>
+                                            <option value="Sábado">Sábado</option>
+                                            <option value="Domingo">Domingo</option>
+                                            <option value="Lunes">Lunes</option>
+                                            <option value="Martes">Martes</option>
+                                            <option value="Miércoles">Miércoles</option>
+                                            <option value="Jueves">Jueves</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label small fw-bold">Artículo / Servicio</label>
+                                    <input type="text" id="regArticulo" class="form-control" placeholder="Ej: Lavadora / Préstamo" required>
+                                </div>
+                                <div class="row g-2 mb-3">
+                                    <div class="col-4">
+                                        <label class="form-label small fw-bold">Precio ($)</label>
+                                        <input type="number" id="regPrecio" class="form-control" placeholder="0.00" required>
+                                    </div>
+                                    <div class="col-4">
+                                        <label class="form-label small fw-bold">Cuota ($)</label>
+                                        <input type="number" id="regAbono" class="form-control" placeholder="0.00" required>
+                                    </div>
+                                    <div class="col-4">
+                                        <label class="form-label small fw-bold">Cargo Atraso</label>
+                                        <input type="number" id="regCargoAtraso" class="form-control" value="0">
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100 fw-bold py-2 shadow-sm">💾 Guardar Cliente</button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- BÚSQUEDA Y LISTA DE CUENTAS -->
+                    <div class="col-lg-7">
+                        <div class="card card-modulo p-4 h-100">
+                            <h4 class="fw-bold text-dark mb-3">🔍 Explorador de Cuentas Activas</h4>
+                            <input type="text" id="inputBuscar" class="form-control form-control-lg mb-3 shadow-sm" placeholder="Buscar por Folio, Nombre o Artículo..." oninput="filtrarClientes()">
+                            <div class="list-group shadow-sm overflow-auto" style="max-height: 520px;" id="listaClientesContainer"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
 
-        <!-- SECCIÓN DE ESTADÍSTICAS Y CONTROL SEMANAL (VIERNES A JUEVES) -->
-        <div class="col-12 mt-3">
-            <div class="seccion-dashboard p-4 shadow-sm">
-                
-                <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2 border-bottom pb-3">
-                    <div>
-                        <h4 class="fw-bold text-dark mb-0">📊 Estadísticas y Control Semanal (Viernes a Jueves)</h4>
-                        <small class="text-muted">Métricas consolidadas en tiempo real desde Firestore</small>
-                    </div>
-                    <div class="d-flex align-items-center gap-2">
-                        <label for="inputMetaManual" class="form-label small fw-bold mb-0 text-secondary">🎯 Meta Global ($):</label>
-                        <input type="number" id="inputMetaManual" class="form-control form-control-sm fw-bold text-success" style="width: 140px;" placeholder="80000" value="80000" oninput="ajustarMetaManual()">
-                    </div>
-                </div>
-
-                <!-- TARJETAS DE INDICADORES CLAVE (KPIS) -->
-                <div class="row g-3 mb-4">
-                    <div class="col-md-3 col-6">
-                        <div class="card card-kpi p-3 bg-light border-start border-success border-4">
-                            <small class="text-muted fw-bold d-block">SEMANA ACTUAL</small>
-                            <h4 class="fw-bold text-success mb-0" id="kpiCobradoSemana">$0.00</h4>
-                            <small class="text-secondary" id="kpiTransaccionesSemana">0 abonos</small>
+            <!-- MÓDULO 2: ESTADÍSTICAS SEMANALES -->
+            <div class="tab-pane fade" id="modulo-estadisticas" role="tabpanel">
+                <div class="card card-modulo p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2 border-bottom pb-3">
+                        <div>
+                            <h4 class="fw-bold text-dark mb-0">📊 Estadísticas y Metas Semanales (Viernes a Jueves)</h4>
+                            <small class="text-muted">Monitoreo consolidado de cobros e indicadores clave</small>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <label for="inputMetaManual" class="form-label small fw-bold mb-0 text-secondary">🎯 Meta Global ($):</label>
+                            <input type="number" id="inputMetaManual" class="form-control form-control-sm fw-bold text-success" style="width: 140px;" placeholder="80000" value="80000" oninput="ajustarMetaManual()">
                         </div>
                     </div>
-                    <div class="col-md-3 col-6">
-                        <div class="card card-kpi p-3 bg-light border-start border-secondary border-4">
-                            <small class="text-muted fw-bold d-block">SEMANA ANTERIOR</small>
-                            <h4 class="fw-bold text-secondary mb-0" id="kpiCobradoSemanaAnterior">$0.00</h4>
-                            <small class="text-primary fw-bold" id="lblComparativaPorcentaje">0% vs semana anterior</small>
+
+                    <!-- KPIS GENERALES -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-3 col-6">
+                            <div class="card card-kpi p-3 bg-light border-start border-success border-4">
+                                <small class="text-muted fw-bold d-block">SEMANA ACTUAL</small>
+                                <h4 class="fw-bold text-success mb-0" id="kpiCobradoSemana">$0.00</h4>
+                                <small class="text-secondary" id="kpiTransaccionesSemana">0 abonos</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <div class="card card-kpi p-3 bg-light border-start border-secondary border-4">
+                                <small class="text-muted fw-bold d-block">SEMANA ANTERIOR</small>
+                                <h4 class="fw-bold text-secondary mb-0" id="kpiCobradoSemanaAnterior">$0.00</h4>
+                                <small class="text-primary fw-bold" id="lblComparativaPorcentaje">0% vs anterior</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <div class="card card-kpi p-3 bg-light border-start border-primary border-4">
+                                <small class="text-muted fw-bold d-block">ARTÍCULOS</small>
+                                <h4 class="fw-bold text-primary mb-0" id="kpiTotalArticulos">$0.00</h4>
+                                <small class="text-muted" id="kpiDetalleArticulos">0 abonos</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <div class="card card-kpi p-3 bg-light border-start border-warning border-4">
+                                <small class="text-muted fw-bold d-block">PRÉSTAMOS</small>
+                                <h4 class="fw-bold text-dark mb-0" id="kpiTotalPrestamos">$0.00</h4>
+                                <small class="text-muted" id="kpiDetallePrestamos">0 abonos</small>
+                            </div>
                         </div>
                     </div>
-                    <div class="col-md-3 col-6">
-                        <div class="card card-kpi p-3 bg-light border-start border-primary border-4">
-                            <small class="text-muted fw-bold d-block">ARTÍCULOS</small>
-                            <h4 class="fw-bold text-primary mb-0" id="kpiTotalArticulos">$0.00</h4>
-                            <small class="text-muted" id="kpiDetalleArticulos">0 abonos</small>
+
+                    <!-- RESUMEN POR MÉTODO DE PAGO -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-12">
+                            <span class="badge bg-dark px-3 py-2">💳 Cierre de Métodos de Pago Semanal</span>
+                        </div>
+                        <div class="col-md-4 col-12">
+                            <div class="card card-kpi p-3 bg-white border-start border-info border-4">
+                                <small class="text-muted fw-bold d-block">TOTAL TRANSFERENCIA</small>
+                                <h4 class="fw-bold text-info mb-0" id="kpiTotalTransferencia">$0.00</h4>
+                                <small class="text-secondary" id="kpiConteoTransferencia">0 abonos</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-12">
+                            <div class="card card-kpi p-3 bg-white border-start border-primary border-4">
+                                <small class="text-muted fw-bold d-block">TOTAL DEPÓSITO</small>
+                                <h4 class="fw-bold text-primary mb-0" id="kpiTotalDeposito">$0.00</h4>
+                                <small class="text-secondary" id="kpiConteoDeposito">0 abonos</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-12">
+                            <div class="card card-kpi p-3 bg-white border-start border-success border-4">
+                                <small class="text-muted fw-bold d-block">TOTAL EFECTIVO</small>
+                                <h4 class="fw-bold text-success mb-0" id="kpiTotalEfectivo">$0.00</h4>
+                                <small class="text-secondary" id="kpiConteoEfectivo">0 abonos</small>
+                            </div>
                         </div>
                     </div>
-                    <div class="col-md-3 col-6">
-                        <div class="card card-kpi p-3 bg-light border-start border-warning border-4">
-                            <small class="text-muted fw-bold d-block">PRÉSTAMOS</small>
-                            <h4 class="fw-bold text-dark mb-0" id="kpiTotalPrestamos">$0.00</h4>
-                            <small class="text-muted" id="kpiDetallePrestamos">0 abonos</small>
+
+                    <!-- BARRA DE META GLOBAL -->
+                    <div class="card p-3 mb-4 border bg-light">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="fw-bold text-dark mb-0">🎯 Avance Frente a la Meta Global</h6>
+                            <span class="badge bg-primary fs-6" id="lblPorcentajeAlcanzado">0%</span>
+                        </div>
+                        <div class="progress barra-progreso-lg mb-3">
+                            <div id="barraMetaGlobal" class="progress-bar progress-bar-striped progress-bar-animated bg-success" style="width: 0%">0%</div>
+                        </div>
+                        <div class="row g-2 text-center text-muted small">
+                            <div class="col-3 border-end"><strong>75%:</strong> <span id="lblMeta75" class="fw-bold text-dark">$0.00</span></div>
+                            <div class="col-3 border-end"><strong>80%:</strong> <span id="lblMeta80" class="fw-bold text-dark">$0.00</span></div>
+                            <div class="col-3 border-end"><strong>85%:</strong> <span id="lblMeta85" class="fw-bold text-dark">$0.00</span></div>
+                            <div class="col-3"><strong>95%:</strong> <span id="lblMeta95" class="fw-bold text-dark">$0.00</span></div>
                         </div>
                     </div>
-                </div>
 
-                <!-- ESCALAS DE CUMPLIMIENTO FRENTE A META GLOBAL -->
-                <div class="card p-3 mb-4 border bg-light">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <h6 class="fw-bold text-dark mb-0">🎯 Avance Frente a la Meta Global</h6>
-                        <span class="badge bg-primary fs-6" id="lblPorcentajeAlcanzado">0%</span>
-                    </div>
-                    <div class="progress barra-progreso-lg mb-3">
-                        <div id="barraMetaGlobal" class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" style="width: 0%">0%</div>
-                    </div>
-                    <div class="row g-2 text-center text-muted small">
-                        <div class="col-3 border-end"><strong>75%:</strong> <span id="lblMeta75" class="fw-bold text-dark">$0.00</span></div>
-                        <div class="col-3 border-end"><strong>80%:</strong> <span id="lblMeta80" class="fw-bold text-dark">$0.00</span></div>
-                        <div class="col-3 border-end"><strong>85%:</strong> <span id="lblMeta85" class="fw-bold text-dark">$0.00</span></div>
-                        <div class="col-3"><strong>95%:</strong> <span id="lblMeta95" class="fw-bold text-dark">$0.00</span></div>
-                    </div>
-                </div>
-
-                <!-- TABLA DIARIA DE VIERNES A JUEVES CONTRAÍDA POR DEFECTO -->
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <h6 class="fw-bold text-dark mb-0">Desglose Diario de Cobros (Ciclo Activo: Viernes a Jueves)</h6>
-                    <!-- DOCUMENTACIÓN: Botón configurado para iniciar en estado contraído -->
-                    <button class="btn btn-outline-secondary btn-sm fw-bold shadow-sm" type="button" data-bs-toggle="collapse" data-bs-target="#contenedorTablaDias" aria-expanded="false" aria-controls="contenedorTablaDias" id="btnToggleDias">
-                        🔽 Mostrar Desglose
-                    </button>
-                </div>
-
-                <!-- DOCUMENTACIÓN: Contenedor con clase 'collapse' sin 'show' para iniciar contraído -->
-                <div class="collapse" id="contenedorTablaDias">
-                    <div class="table-responsive mt-2">
+                    <!-- TABLA RESUMEN DE COBROS POR DÍA -->
+                    <div class="table-responsive">
                         <table class="table table-bordered table-striped text-center align-middle mb-0">
                             <thead class="table-dark">
                                 <tr>
@@ -250,46 +325,59 @@
                                     <th>APORTE AL CICLO (%)</th>
                                 </tr>
                             </thead>
-                            <tbody id="cuerpoTablaDias">
-                                <!-- Filas generadas por JavaScript -->
-                            </tbody>
+                            <tbody id="cuerpoTablaDias"></tbody>
                         </table>
                     </div>
                 </div>
-
             </div>
-        </div>
 
-        <!-- SECCIÓN: RELACIÓN DE CLIENTES (CONTRAÍDA POR DEFECTO) -->
-        <div class="col-12 mt-3" id="seccionLiquidacionContenedor">
-            <div class="seccion-dashboard p-4 shadow-sm border-start border-primary border-4">
-                
-                <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2 border-bottom pb-3">
-                    <div>
-                        <h4 class="fw-bold text-dark mb-0">🎯 Cuentas Próximas a Liquidar (Saldo ≤ $1,500.00)</h4>
-                        <small class="text-muted">Ordenadas descendentemente de mayor a menor saldo (haz clic en cualquier fila para abrir la tarjeta)</small>
+            <!-- MÓDULO 3: CONTROL DIARIO DE COBRANZA -->
+            <div class="tab-pane fade" id="modulo-cobranza" role="tabpanel">
+                <div class="card card-modulo p-4 border-start border-success border-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2 border-bottom pb-3">
+                        <div>
+                            <h4 class="fw-bold text-dark mb-0">📋 Control Diario de Clientes (Viernes a Jueves)</h4>
+                            <small class="text-muted">Cortes diarios con desglose de métodos y exportación directa</small>
+                        </div>
+                        <div class="d-flex align-items-center gap-2 no-print flex-wrap">
+                            <button class="btn btn-outline-success btn-sm fw-bold shadow-sm" onclick="exportarControlDiarioCSV()">
+                                📊 Exportar a Excel (CSV)
+                            </button>
+                            <button class="btn btn-outline-danger btn-sm fw-bold shadow-sm" onclick="exportarControlDiarioPDF()">
+                                📄 Exportar a PDF
+                            </button>
+                            <button class="btn btn-outline-dark btn-sm fw-bold shadow-sm" onclick="imprimirControlDiario()">
+                                🖨️ Imprimir
+                            </button>
+                        </div>
                     </div>
-                    
-                    <div class="d-flex align-items-center gap-2 no-print flex-wrap">
-                        <span class="badge bg-primary fs-6 px-3 py-2">
-                            Total: <span id="lblTotalMenores1500">0</span>
-                        </span>
-                        
-                        <button class="btn btn-outline-primary btn-sm fw-bold shadow-sm" type="button" data-bs-toggle="collapse" data-bs-target="#contenedorTablaLiquidacion" aria-expanded="false" aria-controls="contenedorTablaLiquidacion" id="btnToggleLiquidacion">
-                            🔽 Mostrar Lista
-                        </button>
 
-                        <button class="btn btn-outline-success btn-sm fw-bold shadow-sm" onclick="exportarLiquidacionesCSV()">
-                            📥 Exportar a Excel (CSV)
-                        </button>
-                        <button class="btn btn-outline-dark btn-sm fw-bold shadow-sm" onclick="imprimirListaLiquidacion()">
-                            🖨️ Imprimir Lista
-                        </button>
-                    </div>
+                    <div id="cuerpoReporteDetalladoPorDias"></div>
                 </div>
+            </div>
 
-                <div class="collapse" id="contenedorTablaLiquidacion">
-                    <div class="table-responsive mt-2">
+            <!-- MÓDULO 4: PRÓXIMOS A LIQUIDAR -->
+            <div class="tab-pane fade" id="modulo-liquidacion" role="tabpanel">
+                <div class="card card-modulo p-4 border-start border-primary border-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2 border-bottom pb-3">
+                        <div>
+                            <h4 class="fw-bold text-dark mb-0">🎯 Cuentas Próximas a Liquidar (Saldo ≤ $1,500.00)</h4>
+                            <small class="text-muted">Haz clic en cualquier cliente para abrir su tarjeta digital</small>
+                        </div>
+                        <div class="d-flex align-items-center gap-2 no-print flex-wrap">
+                            <span class="badge bg-primary fs-6 px-3 py-2">
+                                Total: <span id="lblTotalMenores1500">0</span>
+                            </span>
+                            <button class="btn btn-outline-success btn-sm fw-bold shadow-sm" onclick="exportarLiquidacionesCSV()">
+                                📥 Exportar CSV
+                            </button>
+                            <button class="btn btn-outline-dark btn-sm fw-bold shadow-sm" onclick="imprimirListaLiquidacion()">
+                                🖨️ Imprimir
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
                         <table class="table table-bordered table-striped align-middle mb-0 text-center">
                             <thead class="table-primary text-dark">
                                 <tr>
@@ -299,23 +387,20 @@
                                     <th style="width: 20%;">SALDO PENDIENTE</th>
                                 </tr>
                             </thead>
-                            <tbody id="cuerpoTablaMenores1500">
-                                <!-- Filas inyectadas automáticamente por JavaScript -->
-                            </tbody>
+                            <tbody id="cuerpoTablaMenores1500"></tbody>
                         </table>
                     </div>
                 </div>
-
             </div>
-        </div>
 
+        </div>
     </div>
 
-    <!-- VISTA 2: DETALLE DE LA TARJETA DIGITAL INDIVIDUAL -->
-    <div id="vistaTarjeta" class="card card-tarjeta azul p-4 shadow-sm d-none card-tarjeta-azul">
+    <!-- VISTA TARJETA DIGITAL INDIVIDUAL -->
+    <div id="vistaTarjeta" class="card card-tarjeta azul p-4 shadow-sm d-none card-tarjeta-azul my-3">
         <div class="mb-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
             <div id="controlesNavegacion">
-                <button class="btn btn-dark btn-sm me-2" id="btnVolver" onclick="mostrarBuscador()">⬅ Volver al Panel</button>
+                <button class="btn btn-dark btn-sm me-2 fw-bold" id="btnVolver" onclick="mostrarBuscador()">⬅ Volver a Módulos</button>
                 <button class="btn btn-success btn-sm fw-bold text-white me-2" id="btnWhatsApp" onclick="compartirPorWhatsApp()">💬 Enviar por WhatsApp</button>
             </div>
             <div id="controlesEdicionAdmin">
@@ -342,6 +427,7 @@
                 <p class="mb-1"><strong>NOMBRE:</strong> <span id="lblNombre">-</span></p>
                 <p class="mb-1"><strong>DIRECCIÓN:</strong> <span id="lblDireccion">-</span></p>
                 <p class="mb-1"><strong>ZONA:</strong> <span id="lblZona">-</span></p>
+                <p class="mb-1"><strong>DÍA DE COBRO:</strong> <span id="lblDiaCobroVisual" class="fw-bold text-primary">-</span></p>
                 <p class="mb-1"><strong>TIPO:</strong> <span id="lblCategoriaPeriodo">-</span></p>
             </div>
             <div class="col-md-6 text-md-end">
@@ -351,23 +437,32 @@
             </div>
         </div>
 
+        <!-- PANEL DE CAPTURA CON SELECTOR DE MÉTODO DE PAGO -->
         <div id="seccionAdmin" class="card p-3 mb-4 bg-light border-0 shadow-sm text-dark">
-            <h6 class="fw-bold mb-2">Capturar Pago Semanal / Quincenal</h6>
+            <h6 class="fw-bold mb-2">Capturar Abono</h6>
             <div class="row g-2">
                 <div class="col-6 col-md-3">
                     <label class="form-label small fw-bold mb-1">Abono ($)</label>
                     <input type="number" id="inputAbono" class="form-control" placeholder="Monto" required>
                 </div>
-                <div class="col-6 col-md-3">
+                <div class="col-6 col-md-2">
                     <label class="form-label small fw-bold mb-1">Cargo Atraso ($)</label>
                     <input type="number" id="inputCargo" class="form-control" placeholder="Cargo" value="0">
                 </div>
-                <div class="col-12 col-md-3">
+                <div class="col-6 col-md-2">
+                    <label class="form-label small fw-bold mb-1">Método de Pago</label>
+                    <select id="inputMetodoPago" class="form-select" required>
+                        <option value="Transferencia" selected>Transferencia</option>
+                        <option value="Depósito">Depósito</option>
+                        <option value="Efectivo">Efectivo</option>
+                    </select>
+                </div>
+                <div class="col-6 col-md-3">
                     <label class="form-label small fw-bold mb-1">Fecha de Pago</label>
                     <input type="date" id="inputFechaPago" class="form-control">
                 </div>
-                <div class="col-12 col-md-3 d-flex align-items-end">
-                    <button class="btn btn-success w-100 fw-bold" onclick="agregarPagoAClienteActual()">Registrar Pago</button>
+                <div class="col-12 col-md-2 d-flex align-items-end">
+                    <button class="btn btn-success w-100 fw-bold" onclick="agregarPagoAClienteActual()">Registrar</button>
                 </div>
             </div>
         </div>
@@ -378,6 +473,7 @@
                     <tr>
                         <th>N°/FIRMA</th>
                         <th>ABONO</th>
+                        <th>MÉTODO</th>
                         <th>PAGADO</th>
                         <th>CARGO</th>
                         <th>SALDO</th>
@@ -416,46 +512,24 @@
 
     let clientesBD = [];
     let clientesFiltradosLiquidacion = [];
+    let reporteDetalladoExportar = [];
     let clienteSeleccionadoIndex = null;
     let editando = false;
 
-    // Recuperar la meta manual guardada en el navegador
     const metaGuardada = localStorage.getItem("metaCobranzaDistinta");
     if (metaGuardada) {
         document.getElementById("inputMetaManual").value = metaGuardada;
     }
 
-    // Validación para el modo cliente desde WhatsApp
     const parametrosUrl = new URLSearchParams(window.location.search);
     if (parametrosUrl.get("modo") === "cliente") {
         const panelCarga = document.getElementById("pantallaCargandoCliente");
         if (panelCarga) panelCarga.classList.remove("d-none");
     }
 
-    // DOCUMENTACIÓN: Alternador dinámico del texto para el botón de liquidación
-    const contenedorColapsableLiq = document.getElementById('contenedorTablaLiquidacion');
-    const btnToggleLiq = document.getElementById('btnToggleLiquidacion');
-
-    if (contenedorColapsableLiq && btnToggleLiq) {
-        contenedorColapsableLiq.addEventListener('hidden.bs.collapse', () => {
-            btnToggleLiq.innerText = '🔽 Mostrar Lista';
-        });
-        contenedorColapsableLiq.addEventListener('shown.bs.collapse', () => {
-            btnToggleLiq.innerText = '🔼 Ocultar Lista';
-        });
-    }
-
-    // DOCUMENTACIÓN: Alternador dinámico del texto para el botón de la tabla diaria
-    const contenedorColapsableDias = document.getElementById('contenedorTablaDias');
-    const btnToggleDias = document.getElementById('btnToggleDias');
-
-    if (contenedorColapsableDias && btnToggleDias) {
-        contenedorColapsableDias.addEventListener('hidden.bs.collapse', () => {
-            btnToggleDias.innerText = '🔽 Mostrar Desglose';
-        });
-        contenedorColapsableDias.addEventListener('shown.bs.collapse', () => {
-            btnToggleDias.innerText = '🔼 Ocultar Desglose';
-        });
+    function alternarTextoBotonDia(btn) {
+        const estaOculto = btn.getAttribute('aria-expanded') === 'true';
+        btn.innerText = estaOculto ? '🔽 Ver Clientes' : '🔼 Ocultar Clientes';
     }
 
     function formatearDinero(cantidad) {
@@ -469,11 +543,9 @@
         return new Date(2026, mes, dia);
     }
 
-    // DOCUMENTACIÓN: Función que calcula el rango de Viernes a Jueves
     function obtenerRangoCiclo(offsetSemanas = 0) {
         const hoy = new Date();
         const diaSemana = hoy.getDay();
-
         let diasDesdeViernes = diaSemana >= 5 ? diaSemana - 5 : diaSemana + 2;
 
         let viernesInicio = new Date(hoy);
@@ -487,7 +559,6 @@
         return { inicio: viernesInicio, fin: juevesFin };
     }
 
-    // Sincronización en tiempo real con Firestore
     onSnapshot(collection(db, "clientes"), (snapshot) => {
         clientesBD = [];
         snapshot.forEach((doc) => {
@@ -506,21 +577,21 @@
         }
         filtrarClientes();
         procesarMetricas();
+        generarReporteDetalladoPorDias();
         generarRelacionMenores1500();
         verificarPermisosAcceso();
     });
 
-    // Alta de cliente con Categoría y Periodo
     async function registrarCliente(event) {
         event.preventDefault();
-        const folio = document.getElementById("regNumero").value;
-        const nombre = document.getElementById("regNombre").value;
-        const direccion = document.getElementById("regDireccion").value;
+        const folio = document.getElementById("regNumero").value.trim();
+        const nombre = document.getElementById("regNombre").value.trim();
+        const direccion = document.getElementById("regDireccion").value.trim();
         const categoria = document.getElementById("regCategoria").value;
         const periodo = document.getElementById("regPeriodo").value;
         const zona = document.getElementById("regZona").value;
         const diaCobro = document.getElementById("regDiaCobro").value;
-        const articulo = document.getElementById("regArticulo").value;
+        const articulo = document.getElementById("regArticulo").value.trim();
         const precio = parseFloat(document.getElementById("regPrecio").value);
         const abonoSemanal = parseFloat(document.getElementById("regAbono").value);
         const cargoAtrasoInicial = parseFloat(document.getElementById("regCargoAtraso").value) || 0;
@@ -542,7 +613,7 @@
             });
             document.getElementById("formNuevoCliente").reset();
             document.getElementById("regCargoAtraso").value = "0";
-            alert("Cliente guardado con éxito.");
+            alert("Cliente registrado exitosamente.");
         } catch (error) {
             console.error("Error al registrar cliente: ", error);
         }
@@ -557,7 +628,7 @@
         let totalClientesListados = 0;
 
         clientesBD.forEach((cliente, index) => {
-            if (cliente.nombre.toLowerCase().includes(query) || cliente.folio.toLowerCase().includes(query)) {
+            if (cliente.nombre.toLowerCase().includes(query) || cliente.folio.toLowerCase().includes(query) || (cliente.articulo || '').toLowerCase().includes(query)) {
                 let totalPagado = (cliente.historialPagos || []).reduce((sum, p) => sum + p.abono, 0);
                 let totalCargos = (cliente.historialPagos || []).reduce((sum, p) => sum + p.cargo, 0);
                 let saldoActual = cliente.precio + totalCargos - totalPagado;
@@ -570,7 +641,7 @@
                     <div>
                         <span class="badge bg-primary me-2">N° ${cliente.folio}</span>
                         <strong>${cliente.nombre}</strong>
-                        <br><small class="text-muted">${cat} (${per}) - ${cliente.articulo}</small>
+                        <br><small class="text-muted">${cat} (${per}) - ${cliente.articulo} | Cobro: ${cliente.diaCobro || 'Sin día'}</small>
                     </div>
                     <span class="badge bg-danger">Saldo: ${formatearDinero(saldoActual)}</span>
                 </div>`;
@@ -582,7 +653,435 @@
         if (lblTotal) lblTotal.innerText = totalClientesListados;
     }
 
-    // DOCUMENTACIÓN: Genera la relación con clientes cuyo saldo sea <= $1,500.00 de mayor a menor
+    function generarReporteDetalladoPorDias() {
+        const contenedor = document.getElementById("cuerpoReporteDetalladoPorDias");
+        if (!contenedor) return;
+
+        contenedor.innerHTML = "";
+        reporteDetalladoExportar = [];
+
+        const cicloActual = obtenerRangoCiclo(0);
+        const diasSemana = ["Viernes", "Sábado", "Domingo", "Lunes", "Martes", "Miércoles", "Jueves"];
+        const mapaDiasNombre = { 5: "Viernes", 6: "Sábado", 0: "Domingo", 1: "Lunes", 2: "Martes", 3: "Miércoles", 4: "Jueves" };
+        const offsetDias = { "Viernes": 0, "Sábado": 1, "Domingo": 2, "Lunes": 3, "Martes": 4, "Miércoles": 5, "Jueves": 6 };
+        const hoy = new Date();
+
+        let agrupacionPorDia = { "Viernes": [], "Sábado": [], "Domingo": [], "Lunes": [], "Martes": [], "Miércoles": [], "Jueves": [] };
+
+        clientesBD.forEach((c, idx) => {
+            let totalPagado = (c.historialPagos || []).reduce((sum, p) => sum + p.abono, 0);
+            let totalCargos = (c.historialPagos || []).reduce((sum, p) => sum + p.cargo, 0);
+            let saldoActual = c.precio + totalCargos - totalPagado;
+
+            let pagoCiclo = null;
+            (c.historialPagos || []).forEach(p => {
+                let fP = parsearFechaTexto(p.fecha);
+                if (fP >= cicloActual.inicio && fP <= cicloActual.fin) {
+                    pagoCiclo = p;
+                }
+            });
+
+            let semanasConsecutivas = 0;
+            if ((c.historialPagos || []).length === 0) {
+                semanasConsecutivas = 1;
+            } else {
+                let ultimoPago = c.historialPagos[c.historialPagos.length - 1];
+                let fechaUltimo = parsearFechaTexto(ultimoPago.fecha);
+                let diffTiempo = hoy - fechaUltimo;
+                let diasDiff = Math.floor(diffTiempo / (1000 * 60 * 60 * 24));
+                semanasConsecutivas = Math.max(0, Math.floor(diasDiff / 7));
+            }
+
+            let fechaExacta = "";
+            if (pagoCiclo) {
+                fechaExacta = pagoCiclo.fecha;
+            } else {
+                let fCalendario = new Date(cicloActual.inicio);
+                let diasSumar = offsetDias[c.diaCobro] !== undefined ? offsetDias[c.diaCobro] : 0;
+                fCalendario.setDate(fCalendario.getDate() + diasSumar);
+                let d = String(fCalendario.getDate()).padStart(2, '0');
+                let m = String(fCalendario.getMonth() + 1).padStart(2, '0');
+                fechaExacta = `${d}/${m}`;
+            }
+
+            let itemCliente = {
+                ...c,
+                indexOriginal: idx,
+                saldoActual: saldoActual,
+                abonoRegistrado: pagoCiclo ? pagoCiclo.abono : 0,
+                metodoPagoRegistrado: pagoCiclo ? (pagoCiclo.metodoPago || "Efectivo") : "-",
+                semanasConsecutivas: semanasConsecutivas,
+                fechaExacta: fechaExacta
+            };
+
+            if (pagoCiclo) {
+                let fP = parsearFechaTexto(pagoCiclo.fecha);
+                let diaReal = mapaDiasNombre[fP.getDay()];
+                if (diaReal && agrupacionPorDia[diaReal]) {
+                    agrupacionPorDia[diaReal].push(itemCliente);
+                }
+            } else {
+                let diaProgramado = c.diaCobro;
+                if (diaProgramado && agrupacionPorDia[diaProgramado]) {
+                    agrupacionPorDia[diaProgramado].push(itemCliente);
+                }
+            }
+        });
+
+        diasSemana.forEach(diaNombre => {
+            let clientesDelDia = agrupacionPorDia[diaNombre];
+            if (clientesDelDia.length === 0) return;
+
+            clientesDelDia.sort((a, b) => {
+                let numA = parseInt(a.folio.replace(/\D/g, ''), 10) || 0;
+                let numB = parseInt(b.folio.replace(/\D/g, ''), 10) || 0;
+                return numA - numB;
+            });
+
+            let prestamos = clientesDelDia.filter(c => (c.categoria === "Préstamos") || 
+                                                       (c.articulo || "").toLowerCase().includes("préstamo") || 
+                                                       (c.articulo || "").toLowerCase().includes("prestamo") || 
+                                                       (c.articulo || "").toLowerCase().includes("pp"));
+            let articulos = clientesDelDia.filter(c => !prestamos.includes(c));
+
+            let totalMetaDia = clientesDelDia.reduce((sum, c) => sum + (c.abonoSemanal || 0), 0);
+            let totalCobradoDia = clientesDelDia.reduce((sum, c) => sum + c.abonoRegistrado, 0);
+
+            let htmlBloque = `
+                <div class="card p-3 mb-3 border shadow-sm">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 bg-light p-2 rounded border">
+                        <div>
+                            <h5 class="fw-bold text-dark mb-0 d-inline-block me-2">📅 ${diaNombre.toUpperCase()}</h5>
+                            <span class="badge bg-secondary me-2">Meta: ${formatearDinero(totalMetaDia)}</span>
+                            <span class="badge bg-success">Cobrado: ${formatearDinero(totalCobradoDia)}</span>
+                        </div>
+                        <div>
+                            <button class="btn btn-outline-primary btn-sm fw-bold shadow-sm" type="button" 
+                                    data-bs-toggle="collapse" 
+                                    data-bs-target="#contenedorDia_${diaNombre}" 
+                                    aria-expanded="false" 
+                                    aria-controls="contenedorDia_${diaNombre}"
+                                    onclick="alternarTextoBotonDia(this)">
+                                🔽 Ver Clientes
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="collapse mt-3" id="contenedorDia_${diaNombre}">`;
+
+            function renderizarTablaCategoria(lista, tituloCat, colorBadge) {
+                if (lista.length === 0) return "";
+
+                let filas = "";
+                lista.forEach(c => {
+                    let cuota = c.abonoSemanal || 0;
+                    let montoAtraso = c.semanasConsecutivas * cuota;
+
+                    let detalleAtrasoTexto = "";
+                    if (c.semanasConsecutivas > 0) {
+                        detalleAtrasoTexto = `Presenta un atraso de *${c.semanasConsecutivas} semana(s)* con un importe pendiente de *${formatearDinero(montoAtraso)}*.\n`;
+                    } else {
+                        detalleAtrasoTexto = `Su cuota programada de la semana es de *${formatearDinero(cuota)}*.\n`;
+                    }
+
+                    const msgWhatsApp = `Hola *${c.nombre}*, le saludamos de DISTINTA.COM.\n\n` +
+                                        `Le informamos el estado actual de su cuenta:\n` +
+                                        `🔹 *Crédito N°:* ${c.folio}\n` +
+                                        `🔹 *Concepto:* ${c.articulo}\n` +
+                                        `🔹 *Saldo Restante:* ${formatearDinero(c.saldoActual)}\n` +
+                                        detalleAtrasoTexto + `\n` +
+                                        `Agradecemos confirmar la fecha de su pago. Para cualquier duda o aclaración, por favor contáctenos.`;
+
+                    const urlWha = `https://api.whatsapp.com/send?text=${encodeURIComponent(msgWhatsApp)}`;
+
+                    reporteDetalladoExportar.push({
+                        fecha: c.fechaExacta,
+                        folio: c.folio,
+                        nombre: c.nombre,
+                        articulo: c.articulo,
+                        cobradoSemana: c.abonoRegistrado,
+                        metodoPago: c.metodoPagoRegistrado
+                    });
+
+                    let estadoBadge = c.abonoRegistrado > 0 
+                        ? `<span class="badge bg-success">Pagado: ${formatearDinero(c.abonoRegistrado)}</span>`
+                        : `<span class="badge bg-danger">Sin Abono ($0.00)</span>`;
+
+                    let metodoBadge = c.abonoRegistrado > 0 
+                        ? `<span class="badge bg-info text-dark">${c.metodoPagoRegistrado}</span>` 
+                        : `<span class="text-muted">-</span>`;
+
+                    filas += `
+                        <tr class="fila-liquidacion" onclick="seleccionarCliente(${c.indexOriginal})" title="Clic para abrir cuenta">
+                            <td><span class="badge bg-dark">N° ${c.folio}</span></td>
+                            <td class="text-start"><strong>${c.nombre}</strong><br><small class="text-muted">${c.articulo}</small></td>
+                            <td class="fw-bold text-primary">${formatearDinero(c.abonoSemanal)}</td>
+                            <td>${estadoBadge}</td>
+                            <td>${metodoBadge}</td>
+                            <td>
+                                <span class="badge bg-warning text-dark">${c.semanasConsecutivas} sem</span>
+                                <br><small class="text-danger fw-bold">${formatearDinero(montoAtraso)}</small>
+                            </td>
+                            <td class="text-danger fw-bold">${formatearDinero(c.saldoActual)}</td>
+                            <td onclick="event.stopPropagation()">
+                                <a href="${urlWha}" target="_blank" class="btn btn-sm btn-success fw-bold shadow-sm px-2 py-1">💬 Recordar</a>
+                            </td>
+                        </tr>`;
+                });
+
+                return `
+                    <div class="mt-2 mb-3">
+                        <span class="badge ${colorBadge} mb-1 fs-6">${tituloCat}</span>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped text-center align-middle mb-0 small">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>FOLIO</th>
+                                        <th class="text-start">CLIENTE / ARTÍCULO</th>
+                                        <th>CUOTA PACTADA</th>
+                                        <th>ABONO SEMANAL</th>
+                                        <th>MÉTODO</th>
+                                        <th>SEM. CONSECUTIVAS / ATRASO</th>
+                                        <th>SALDO TOTAL</th>
+                                        <th>ACCIONES</th>
+                                    </tr>
+                                </thead>
+                                <tbody>${filas}</tbody>
+                            </table>
+                        </div>
+                    </div>`;
+            }
+
+            htmlBloque += renderizarTablaCategoria(prestamos, "PRÉSTAMOS", "bg-warning text-dark");
+            htmlBloque += renderizarTablaCategoria(articulos, "ARTÍCULOS", "bg-primary text-white");
+            htmlBloque += `</div></div>`;
+
+            contenedor.innerHTML += htmlBloque;
+        });
+    }
+
+    // EXPORTACIÓN A EXCEL: Desglose por método en cada corte diario y Gran Total al final
+    function exportarControlDiarioCSV() {
+        const clientesConPago = (reporteDetalladoExportar || []).filter(r => r.cobradoSemana > 0);
+
+        if (clientesConPago.length === 0) {
+            alert("No hay pagos registrados en la semana para exportar.");
+            return;
+        }
+
+        let csv = "\uFEFF";
+        csv += "Fecha,Folio,Nombre Completo,Articulo,Metodo de Pago,Importe Cobrado\n";
+
+        const pagosPorFecha = {};
+        clientesConPago.forEach(r => {
+            if (!pagosPorFecha[r.fecha]) {
+                pagosPorFecha[r.fecha] = [];
+            }
+            pagosPorFecha[r.fecha].push(r);
+        });
+
+        let granTotalCobrado = 0;
+        let sumaTotalTransf = 0, abonosTotalTransf = 0;
+        let sumaTotalDepo = 0, abonosTotalDepo = 0;
+        let sumaTotalEfec = 0, abonosTotalEfec = 0;
+
+        Object.keys(pagosPorFecha).forEach(fecha => {
+            const listaDia = pagosPorFecha[fecha];
+            let subtotalDia = 0;
+            let subDiaTransf = 0, subDiaDepo = 0, subDiaEfec = 0;
+
+            listaDia.forEach(r => {
+                let nom = `"${r.nombre.replace(/"/g, '""')}"`;
+                let art = `"${r.articulo.replace(/"/g, '""')}"`;
+                
+                csv += `"${r.fecha}","${r.folio}",${nom},${art},"${r.metodoPago}",${r.cobradoSemana.toFixed(2)}\n`;
+
+                subtotalDia += r.cobradoSemana;
+                granTotalCobrado += r.cobradoSemana;
+
+                if (r.metodoPago === "Transferencia") {
+                    subDiaTransf += r.cobradoSemana;
+                    sumaTotalTransf += r.cobradoSemana;
+                    abonosTotalTransf++;
+                } else if (r.metodoPago === "Depósito") {
+                    subDiaDepo += r.cobradoSemana;
+                    sumaTotalDepo += r.cobradoSemana;
+                    abonosTotalDepo++;
+                } else {
+                    subDiaEfec += r.cobradoSemana;
+                    sumaTotalEfec += r.cobradoSemana;
+                    abonosTotalEfec++;
+                }
+            });
+
+            csv += `"", "", "", "CORTE DIARIO (${fecha}) -> Transferencia: $${subDiaTransf.toFixed(2)} | Depósito: $${subDiaDepo.toFixed(2)} | Efectivo: $${subDiaEfec.toFixed(2)}", "TOTAL DÍA:", "${subtotalDia.toFixed(2)}"\n`;
+            csv += "\n";
+        });
+
+        csv += `"", "", "", "RESUMEN DE CORTE DE CAJA SEMANAL (CIERRE GENERAL)", "", ""\n`;
+        csv += `"", "", "", "TOTAL TRANSFERENCIA", "(${abonosTotalTransf} abonos)", "${sumaTotalTransf.toFixed(2)}"\n`;
+        csv += `"", "", "", "TOTAL DEPÓSITO", "(${abonosTotalDepo} abonos)", "${sumaTotalDepo.toFixed(2)}"\n`;
+        csv += `"", "", "", "TOTAL EFECTIVO", "(${abonosTotalEfec} abonos)", "${sumaTotalEfec.toFixed(2)}"\n`;
+        csv += `"", "", "", "GRAN TOTAL SEMANAL", "(${clientesConPago.length} abonos)", "${granTotalCobrado.toFixed(2)}"\n`;
+
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const a = document.createElement("a");
+        const fechaHoy = new Date().toISOString().slice(0, 10);
+        a.href = URL.createObjectURL(blob);
+        a.setAttribute("download", `reporte_cobranza_desglose_${fechaHoy}.csv`);
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    }
+
+    // EXPORTACIÓN A PDF: Gran Total Semanal únicamente al final del documento
+    function exportarControlDiarioPDF() {
+        const clientesConPago = (reporteDetalladoExportar || []).filter(r => r.cobradoSemana > 0);
+
+        if (clientesConPago.length === 0) {
+            alert("No hay pagos registrados en la semana para exportar a PDF.");
+            return;
+        }
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('portrait');
+
+        doc.setFontSize(15);
+        doc.setTextColor(0, 86, 179);
+        doc.text("DISTINTA.COM - REPORTE DE COBRANZA", 14, 15);
+        
+        doc.setFontSize(9);
+        doc.setTextColor(100);
+        const fechaHoy = new Date().toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' });
+        doc.text(`Fecha de emisión: ${fechaHoy} | Ciclo Activo: Viernes a Jueves`, 14, 21);
+
+        const columnas = [
+            { header: 'Fecha', dataKey: 'fecha' },
+            { header: 'Folio', dataKey: 'folio' },
+            { header: 'Cliente', dataKey: 'nombre' },
+            { header: 'Artículo', dataKey: 'articulo' },
+            { header: 'Método', dataKey: 'metodoPago' },
+            { header: 'Importe Cobrado', dataKey: 'cobradoSemana' }
+        ];
+
+        const pagosPorFecha = {};
+        clientesConPago.forEach(r => {
+            if (!pagosPorFecha[r.fecha]) {
+                pagosPorFecha[r.fecha] = [];
+            }
+            pagosPorFecha[r.fecha].push(r);
+        });
+
+        const filasPDF = [];
+        let granTotalCobradoPDF = 0;
+        let totalTransfPDF = 0, totalDepoPDF = 0, totalEfecPDF = 0;
+
+        Object.keys(pagosPorFecha).forEach(fecha => {
+            const listaDia = pagosPorFecha[fecha];
+            let subtotalDia = 0;
+            let subDiaTransf = 0, subDiaDepo = 0, subDiaEfec = 0;
+
+            listaDia.forEach(r => {
+                subtotalDia += r.cobradoSemana;
+                granTotalCobradoPDF += r.cobradoSemana;
+
+                if (r.metodoPago === "Transferencia") {
+                    subDiaTransf += r.cobradoSemana;
+                    totalTransfPDF += r.cobradoSemana;
+                } else if (r.metodoPago === "Depósito") {
+                    subDiaDepo += r.cobradoSemana;
+                    totalDepoPDF += r.cobradoSemana;
+                } else {
+                    subDiaEfec += r.cobradoSemana;
+                    totalEfecPDF += r.cobradoSemana;
+                }
+
+                filasPDF.push({
+                    fecha: r.fecha,
+                    folio: r.folio,
+                    nombre: r.nombre,
+                    articulo: r.articulo,
+                    metodoPago: r.metodoPago,
+                    cobradoSemana: formatearDinero(r.cobradoSemana),
+                    esCorte: false
+                });
+            });
+
+            filasPDF.push({
+                fecha: '',
+                folio: '',
+                nombre: `CORTE (${fecha})`,
+                articulo: `Transf: ${formatearDinero(subDiaTransf)} | Dep: ${formatearDinero(subDiaDepo)} | Efec: ${formatearDinero(subDiaEfec)}`,
+                metodoPago: 'TOTAL DÍA:',
+                cobradoSemana: formatearDinero(subtotalDia),
+                esCorte: true
+            });
+        });
+
+        doc.autoTable({
+            columns: columnas,
+            body: filasPDF,
+            startY: 26,
+            theme: 'striped',
+            styles: { fontSize: 8, cellPadding: 2, halign: 'center' },
+            headStyles: { fillColor: [0, 86, 179], textColor: 255, fontStyle: 'bold' },
+            columnStyles: {
+                fecha: { cellWidth: 18 },
+                folio: { cellWidth: 16 },
+                nombre: { halign: 'left', cellWidth: 50 },
+                articulo: { halign: 'left', cellWidth: 48 },
+                metodoPago: { cellWidth: 26 },
+                cobradoSemana: { halign: 'right', fontStyle: 'bold', cellWidth: 28 }
+            },
+            didParseCell: function(data) {
+                if (data.row.raw && data.row.raw.esCorte) {
+                    data.cell.styles.fillColor = [225, 238, 255];
+                    data.cell.styles.fontStyle = 'bold';
+                    data.cell.styles.textColor = [0, 86, 179];
+                }
+            }
+        });
+
+        let posY = doc.lastAutoTable.finalY + 8;
+        if (posY > 240) {
+            doc.addPage();
+            posY = 20;
+        }
+
+        doc.setFillColor(245, 247, 250);
+        doc.roundedRect(14, posY, 182, 32, 3, 3, 'F');
+        doc.setDrawColor(0, 86, 179);
+        doc.roundedRect(14, posY, 182, 32, 3, 3, 'D');
+
+        doc.setFontSize(10);
+        doc.setTextColor(0, 86, 179);
+        doc.setFont(undefined, 'bold');
+        doc.text("RESUMEN DE CORTE DE CAJA SEMANAL (CIERRE FINAL)", 18, posY + 7);
+
+        doc.setFontSize(8.5);
+        doc.setTextColor(50);
+        doc.setFont(undefined, 'normal');
+        doc.text(`Total en Transferencias: ${formatearDinero(totalTransfPDF)}`, 18, posY + 15);
+        doc.text(`Total en Depósitos: ${formatearDinero(totalDepoPDF)}`, 18, posY + 22);
+        doc.text(`Total en Efectivo: ${formatearDinero(totalEfecPDF)}`, 105, posY + 15);
+
+        doc.setFontSize(10);
+        doc.setTextColor(0, 128, 0);
+        doc.setFont(undefined, 'bold');
+        doc.text(`GRAN TOTAL SEMANAL: ${formatearDinero(granTotalCobradoPDF)}`, 105, posY + 24);
+
+        const fechaArchivo = new Date().toISOString().slice(0, 10);
+        doc.save(`reporte_cobranza_desglose_${fechaArchivo}.pdf`);
+    }
+
+    function imprimirControlDiario() {
+        if (!reporteDetalladoExportar || reporteDetalladoExportar.length === 0) {
+            alert("No hay registros en el reporte para imprimir.");
+            return;
+        }
+        window.print();
+    }
+
     function generarRelacionMenores1500() {
         const cuerpoTabla = document.getElementById("cuerpoTablaMenores1500");
         const lblTotal = document.getElementById("lblTotalMenores1500");
@@ -607,9 +1106,7 @@
         clientesFiltradosLiquidacion = clientesConSaldo.filter(c => c.saldo <= 1500 && c.saldo >= 0);
         clientesFiltradosLiquidacion.sort((a, b) => b.saldo - a.saldo);
 
-        if (lblTotal) {
-            lblTotal.innerText = clientesFiltradosLiquidacion.length;
-        }
+        if (lblTotal) lblTotal.innerText = clientesFiltradosLiquidacion.length;
 
         if (clientesFiltradosLiquidacion.length === 0) {
             cuerpoTabla.innerHTML = `<tr><td colspan="4" class="text-muted py-3">No hay clientes con saldo igual o menor a $1,500.00 en este momento.</td></tr>`;
@@ -631,33 +1128,31 @@
         });
     }
 
-    // DOCUMENTACIÓN: Genera y descarga el archivo CSV para Excel
     function exportarLiquidacionesCSV() {
         if (!clientesFiltradosLiquidacion || clientesFiltradosLiquidacion.length === 0) {
             alert("No hay clientes en la lista para exportar.");
             return;
         }
 
-        let csvContenido = "\uFEFF"; 
-        csvContenido += "Folio,Nombre Completo,Articulo,Saldo\n";
+        let csv = "\uFEFF"; 
+        csv += "Folio,Nombre Completo,Articulo,Saldo\n";
 
         clientesFiltradosLiquidacion.forEach(c => {
-            let nombreLimpio = `"${c.nombre.replace(/"/g, '""')}"`;
-            let articuloLimpio = `"${c.articulo.replace(/"/g, '""')}"`;
-            csvContenido += `"${c.folio}",${nombreLimpio},${articuloLimpio},${c.saldo.toFixed(2)}\n`;
+            let nom = `"${c.nombre.replace(/"/g, '""')}"`;
+            let art = `"${c.articulo.replace(/"/g, '""')}"`;
+            csv += `"${c.folio}",${nom},${art},${c.saldo.toFixed(2)}\n`;
         });
 
-        const blob = new Blob([csvContenido], { type: 'text/csv;charset=utf-8;' });
-        const enlace = document.createElement("a");
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const a = document.createElement("a");
         const fechaHoy = new Date().toISOString().slice(0, 10);
-        enlace.href = URL.createObjectURL(blob);
-        enlace.setAttribute("download", `clientes_saldo_menor_1500_${fechaHoy}.csv`);
-        document.body.appendChild(enlace);
-        enlace.click();
-        document.body.removeChild(enlace);
+        a.href = URL.createObjectURL(blob);
+        a.setAttribute("download", `clientes_saldo_menor_1500_${fechaHoy}.csv`);
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
     }
 
-    // DOCUMENTACIÓN: Imprime la lista completa de liquidación
     function imprimirListaLiquidacion() {
         if (!clientesFiltradosLiquidacion || clientesFiltradosLiquidacion.length === 0) {
             alert("No hay clientes en la lista para imprimir.");
@@ -666,7 +1161,6 @@
         window.print();
     }
 
-    // Motor de Estadísticas Semanales (Viernes a Jueves)
     function procesarMetricas() {
         let totalSemanaActual = 0;
         let abonosSemanaActual = 0;
@@ -676,6 +1170,13 @@
         let abonosArticulos = 0;
         let totalPrestamos = 0;
         let abonosPrestamos = 0;
+
+        let totalTransferencia = 0;
+        let conteoTransferencia = 0;
+        let totalDeposito = 0;
+        let conteoDeposito = 0;
+        let totalEfectivo = 0;
+        let conteoEfectivo = 0;
 
         const cicloActual = obtenerRangoCiclo(0);
         const cicloAnterior = obtenerRangoCiclo(1);
@@ -711,6 +1212,18 @@
                         abonosArticulos++;
                     }
 
+                    const metodo = pago.metodoPago || "Efectivo";
+                    if (metodo === "Transferencia") {
+                        totalTransferencia += pago.abono;
+                        conteoTransferencia++;
+                    } else if (metodo === "Depósito") {
+                        totalDeposito += pago.abono;
+                        conteoDeposito++;
+                    } else {
+                        totalEfectivo += pago.abono;
+                        conteoEfectivo++;
+                    }
+
                     const dia = fPago.getDay();
                     if (diasSemanaMap[dia]) {
                         diasSemanaMap[dia].total += pago.abono;
@@ -735,6 +1248,15 @@
         document.getElementById("kpiDetalleArticulos").innerText = `${abonosArticulos} abonos`;
         document.getElementById("kpiTotalPrestamos").innerText = formatearDinero(totalPrestamos);
         document.getElementById("kpiDetallePrestamos").innerText = `${abonosPrestamos} abonos`;
+
+        document.getElementById("kpiTotalTransferencia").innerText = formatearDinero(totalTransferencia);
+        document.getElementById("kpiConteoTransferencia").innerText = `${conteoTransferencia} abonos`;
+
+        document.getElementById("kpiTotalDeposito").innerText = formatearDinero(totalDeposito);
+        document.getElementById("kpiConteoDeposito").innerText = `${conteoDeposito} abonos`;
+
+        document.getElementById("kpiTotalEfectivo").innerText = formatearDinero(totalEfectivo);
+        document.getElementById("kpiConteoEfectivo").innerText = `${conteoEfectivo} abonos`;
 
         const metaGlobal = parseFloat(document.getElementById("inputMetaManual").value) || 0;
         document.getElementById("lblMeta75").innerText = formatearDinero(metaGlobal * 0.75);
@@ -787,6 +1309,7 @@
         const m = String(hoy.getMonth() + 1).padStart(2, '0');
         const d = String(hoy.getDate()).padStart(2, '0');
         document.getElementById("inputFechaPago").value = `${y}-${m}-${d}`;
+        document.getElementById("inputMetodoPago").value = "Transferencia";
 
         document.getElementById("vistaBusqueda").classList.add("d-none");
         document.getElementById("vistaTarjeta").classList.remove("d-none");
@@ -800,8 +1323,9 @@
             <div class="col-md-6">
                 <p class="mb-1"><strong>NOMBRE:</strong> <span>${cliente.nombre}</span></p>
                 <p class="mb-1"><strong>DIRECCIÓN:</strong> <span>${cliente.direccion}</span></p>
-                <p class="mb-1"><strong>ZONA:</strong> <span>${cliente.zona || 'Local'}</span> (Cobro: ${cliente.diaCobro || 'N/A'})</p>
-                <p class="mb-1"><strong>TIPO:</strong> <span class="badge bg-primary">${cliente.categoria || 'Artículos'}</span> <span class="badge bg-secondary">${cliente.periodo || 'Semanal'}</span></p>
+                <p class="mb-1"><strong>ZONA:</strong> <span>${cliente.zona || 'Local'}</span></p>
+                <p class="mb-1"><strong>DÍA DE COBRO:</strong> <span class="badge bg-primary fs-6">${cliente.diaCobro || 'Sin asignar'}</span></p>
+                <p class="mb-1"><strong>TIPO:</strong> <span class="badge bg-secondary">${cliente.categoria || 'Artículos'}</span> <span class="badge bg-dark">${cliente.periodo || 'Semanal'}</span></p>
             </div>
             <div class="col-md-6 text-md-end">
                 <p class="mb-1"><strong>CONCEPTO:</strong> <span>${cliente.articulo}</span></p>
@@ -820,11 +1344,19 @@
             btn.innerText = "💾 Guardar Cambios";
             btn.classList.replace("btn-warning", "btn-primary");
 
+            const diasOpciones = ["Viernes", "Sábado", "Domingo", "Lunes", "Martes", "Miércoles", "Jueves"];
+            let optionsDiaHtml = diasOpciones.map(d => `<option value="${d}" ${cliente.diaCobro === d ? 'selected' : ''}>${d}</option>`).join('');
+
             const contenedor = document.getElementById("contenedorDatosCliente");
             contenedor.innerHTML = `
                 <div class="col-md-6">
                     <div class="mb-2"><strong>NOMBRE:</strong><input type="text" id="editNombre" class="form-control form-control-sm" value="${cliente.nombre}"></div>
                     <div class="mb-2"><strong>DIRECCIÓN:</strong><input type="text" id="editDireccion" class="form-control form-control-sm" value="${cliente.direccion}"></div>
+                    <div class="mb-2"><strong>DÍA DE COBRO:</strong>
+                        <select id="editDiaCobro" class="form-select form-select-sm fw-bold text-primary">
+                            ${optionsDiaHtml}
+                        </select>
+                    </div>
                     <div class="mb-2"><strong>CATEGORÍA:</strong>
                         <select id="editCategoria" class="form-select form-select-sm">
                             <option value="Artículos" ${cliente.categoria === 'Artículos' ? 'selected' : ''}>Artículos</option>
@@ -841,14 +1373,15 @@
                 <div class="col-md-6">
                     <div class="mb-2"><strong>ARTÍCULO:</strong><input type="text" id="editArticulo" class="form-control form-control-sm" value="${cliente.articulo}"></div>
                     <div class="mb-2"><strong>PRECIO ($):</strong><input type="number" id="editPrecio" class="form-control form-control-sm" value="${cliente.precio}"></div>
-                    <div class="mb-2"><strong>CUOTA ($):</strong><input type="number" id="editAbono" class="form-control form-control-sm" value="${cliente.abonoSemanal}"></div>
+                    <div class="mb-2"><strong>CUOTA PACTADA ($):</strong><input type="number" id="editAbono" class="form-control form-control-sm" value="${cliente.abonoSemanal}"></div>
                 </div>`;
         } else {
-            const nombreNue = document.getElementById("editNombre").value;
-            const direccionNue = document.getElementById("editDireccion").value;
+            const nombreNue = document.getElementById("editNombre").value.trim();
+            const direccionNue = document.getElementById("editDireccion").value.trim();
+            const diaCobroNue = document.getElementById("editDiaCobro").value;
             const categoriaNue = document.getElementById("editCategoria").value;
             const periodoNue = document.getElementById("editPeriodo").value;
-            const articuloNue = document.getElementById("editArticulo").value;
+            const articuloNue = document.getElementById("editArticulo").value.trim();
             const precioNue = parseFloat(document.getElementById("editPrecio").value) || 0;
             const abonoNue = parseFloat(document.getElementById("editAbono").value) || 0;
 
@@ -857,6 +1390,7 @@
                 await updateDoc(ref, {
                     nombre: nombreNue,
                     direccion: direccionNue,
+                    diaCobro: diaCobroNue,
                     categoria: categoriaNue,
                     periodo: periodoNue,
                     articulo: articuloNue,
@@ -867,7 +1401,7 @@
                 btn.innerText = "✏️ Editar Datos";
                 btn.classList.replace("btn-primary", "btn-warning");
             } catch (error) {
-                console.error("Error al actualizar: ", error);
+                console.error("Error al actualizar cliente: ", error);
             }
         }
     }
@@ -895,9 +1429,12 @@
             acumulado += pago.abono;
             saldo = saldo - pago.abono + pago.cargo;
             let num = String(i + 1).padStart(2, '0');
+            let metodo = pago.metodoPago || "Efectivo";
+
             let fila = `<tr>
                 <td><strong>${num}</strong></td>
                 <td>${formatearDinero(pago.abono)}</td>
+                <td><span class="badge bg-secondary">${metodo}</span></td>
                 <td>${formatearDinero(acumulado)}</td>
                 <td>${formatearDinero(pago.cargo)}</td>
                 <td class="text-danger fw-bold">${formatearDinero(saldo)}</td>
@@ -911,10 +1448,11 @@
         const cliente = clientesBD[clienteSeleccionadoIndex];
         const montoAbono = parseFloat(document.getElementById("inputAbono").value);
         const montoCargo = parseFloat(document.getElementById("inputCargo").value) || 0;
+        const metodoPago = document.getElementById("inputMetodoPago").value;
         const inputFecha = document.getElementById("inputFechaPago");
 
         if (isNaN(montoAbono) || montoAbono <= 0) {
-            alert("Monto inválido.");
+            alert("Monto de abono inválido.");
             return;
         }
 
@@ -930,6 +1468,7 @@
         const nuevoHistorial = [...(cliente.historialPagos || []), {
             abono: montoAbono,
             cargo: montoCargo,
+            metodoPago: metodoPago,
             fecha: fechaTxt
         }];
 
@@ -938,6 +1477,7 @@
             await updateDoc(ref, { historialPagos: nuevoHistorial });
             document.getElementById("inputAbono").value = "";
             document.getElementById("inputCargo").value = "0";
+            document.getElementById("inputMetodoPago").value = "Transferencia";
         } catch (error) {
             console.error("Error al registrar pago: ", error);
         }
@@ -954,11 +1494,35 @@
         let totalCargos = (cliente.historialPagos || []).reduce((sum, p) => sum + p.cargo, 0);
         let saldoActual = cliente.precio + totalCargos - totalPagado;
 
+        const hoy = new Date();
+        let semanasConsecutivas = 0;
+        if ((cliente.historialPagos || []).length === 0) {
+            semanasConsecutivas = 1;
+        } else {
+            let ultimoPago = cliente.historialPagos[cliente.historialPagos.length - 1];
+            let fechaUltimo = parsearFechaTexto(ultimoPago.fecha);
+            let diffTiempo = hoy - fechaUltimo;
+            let diasDiff = Math.floor(diffTiempo / (1000 * 60 * 60 * 24));
+            semanasConsecutivas = Math.max(0, Math.floor(diasDiff / 7));
+        }
+
+        let cuota = cliente.abonoSemanal || 0;
+        let montoAtraso = semanasConsecutivas * cuota;
+
+        let detalleAtrasoTexto = "";
+        if (semanasConsecutivas > 0) {
+            detalleAtrasoTexto = `Presenta un atraso de *${semanasConsecutivas} semana(s)* con un importe pendiente de *${formatearDinero(montoAtraso)}*.\n`;
+        } else {
+            detalleAtrasoTexto = `Su cuota programada de la semana es de *${formatearDinero(cuota)}*.\n`;
+        }
+
         const url = `${window.location.origin}${window.location.pathname}?folio=${cliente.folio}&modo=cliente`;
         const mensaje = `Hola *${cliente.nombre}*, te compartimos tu estado de cuenta en DISTINTA.COM.\n\n` +
                         `🔹 *Crédito N°:* ${cliente.folio}\n` +
                         `🔹 *Concepto:* ${cliente.articulo}\n` +
-                        `🔹 *Saldo Restante:* ${formatearDinero(saldoActual)}\n\n` +
+                        `🔹 *Saldo Restante:* ${formatearDinero(saldoActual)}\n` +
+                        detalleAtrasoTexto + `\n` +
+                        `Agradecemos confirmar la fecha de su pago. Para cualquier duda o aclaración, por favor contáctenos.\n\n` +
                         `Revisa tu historial aquí: ${url}`;
 
         window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(mensaje)}`, '_blank');
@@ -997,6 +1561,10 @@
     window.ajustarMetaManual = ajustarMetaManual;
     window.exportarLiquidacionesCSV = exportarLiquidacionesCSV;
     window.imprimirListaLiquidacion = imprimirListaLiquidacion;
+    window.exportarControlDiarioCSV = exportarControlDiarioCSV;
+    window.exportarControlDiarioPDF = exportarControlDiarioPDF;
+    window.imprimirControlDiario = imprimirControlDiario;
+    window.alternarTextoBotonDia = alternarTextoBotonDia;
 </script>
 
 </body>
