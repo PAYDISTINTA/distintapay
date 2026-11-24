@@ -622,6 +622,10 @@
 
         let html = `<div class="row g-3">`;
         excepcionesBD.forEach(item => {
+            const folioInicial = (item.folio && item.folio !== "N/A") ? item.folio : "";
+            const montoInicial = parseFloat(item.monto) || 0;
+            const metodoInicial = item.metodoPago || "Transferencia";
+
             html += `
                 <div class="col-md-6">
                     <div class="card border-warning shadow-sm p-3">
@@ -629,9 +633,26 @@
                             <span class="badge bg-warning text-dark">Motivo: ${item.motivo || 'Requiere revisión'}</span>
                             <small class="text-muted">Tel: ${item.telefono || 'Desconocido'}</small>
                         </div>
-                        <p class="mb-1"><strong>Cliente Detectado:</strong> ${item.nombreCliente || 'No identificado'} (Folio: ${item.folio || 'N/A'})</p>
-                        <p class="mb-1"><strong>Monto Leído:</strong> <span class="text-success fw-bold">${formatearDinero(item.monto || 0)}</span> | <strong>Método:</strong> ${item.metodoPago || 'Transferencia'}</p>
+                        <p class="mb-1"><strong>Cliente Detectado:</strong> ${item.nombreCliente || 'No identificado'} (Folio OCR: ${item.folio || 'N/A'})</p>
                         <p class="mb-2 small text-muted"><strong>Mensaje del cliente:</strong> "${item.mensajeCliente || 'Sin texto adicional'}"</p>
+                        <div class="row g-2 mb-2">
+                            <div class="col-4">
+                                <label class="form-label small fw-bold mb-1">Folio Cliente</label>
+                                <input type="text" id="folioExc_${item.id}" class="form-control form-control-sm" value="${folioInicial}" placeholder="Ej: 272D">
+                            </div>
+                            <div class="col-4">
+                                <label class="form-label small fw-bold mb-1">Monto ($)</label>
+                                <input type="number" step="0.01" id="montoExc_${item.id}" class="form-control form-control-sm" value="${montoInicial}">
+                            </div>
+                            <div class="col-4">
+                                <label class="form-label small fw-bold mb-1">Método</label>
+                                <select id="metodoExc_${item.id}" class="form-select form-select-sm">
+                                    <option value="Transferencia" ${metodoInicial === 'Transferencia' ? 'selected' : ''}>Transferencia</option>
+                                    <option value="Depósito" ${metodoInicial === 'Depósito' ? 'selected' : ''}>Depósito</option>
+                                    <option value="Efectivo" ${metodoInicial === 'Efectivo' ? 'selected' : ''}>Efectivo</option>
+                                </select>
+                            </div>
+                        </div>
                         <div class="d-flex gap-2 mt-2">
                             <button class="btn btn-success btn-sm fw-bold flex-fill" onclick="aprobarExcepcionIA('${item.id}')">✅ Aprobar y Aplicar</button>
                             <button class="btn btn-outline-danger btn-sm fw-bold" onclick="rechazarExcepcionIA('${item.id}')">❌ Descartar</button>
@@ -647,9 +668,27 @@
         const item = excepcionesBD.find(e => e.id === idExcepcion);
         if (!item) return;
 
-        const clienteIndex = clientesBD.findIndex(c => c.folio === item.folio || c.telefono === item.telefono);
+        const inputFolioEl = document.getElementById(`folioExc_${idExcepcion}`);
+        const inputMontoEl = document.getElementById(`montoExc_${idExcepcion}`);
+        const selectMetodoEl = document.getElementById(`metodoExc_${idExcepcion}`);
+
+        const folioAplicar = (inputFolioEl ? inputFolioEl.value.trim() : "") || ((item.folio && item.folio !== "N/A") ? item.folio.trim() : "");
+        const montoAplicar = inputMontoEl ? parseFloat(inputMontoEl.value) : (parseFloat(item.monto) || 0);
+        const metodoAplicar = selectMetodoEl ? selectMetodoEl.value : (item.metodoPago || "Transferencia");
+
+        if (!folioAplicar) {
+            alert("Ingresa el Folio del cliente al que deseas aplicar este comprobante.");
+            return;
+        }
+
+        if (isNaN(montoAplicar) || montoAplicar <= 0) {
+            alert("Ingresa un monto válido mayor a $0.00 antes de aplicar el abono.");
+            return;
+        }
+
+        const clienteIndex = clientesBD.findIndex(c => String(c.folio || "").trim().toLowerCase() === folioAplicar.toLowerCase());
         if (clienteIndex === -1) {
-            alert("No se encontró un cliente vinculado con ese folio o teléfono. Edita el cliente primero para asignar su teléfono.");
+            alert(`No se encontró ningún cliente con el Folio "${folioAplicar}".`);
             return;
         }
 
@@ -657,19 +696,25 @@
         const h = new Date();
         const fechaTxt = item.fecha || `${String(h.getDate()).padStart(2, '0')}/${String(h.getMonth() + 1).padStart(2, '0')}`;
 
-        const nuevoHistorial = [...(cliente.historialPagos || []), {
-            abono: parseFloat(item.monto) || 0,
+        const nuevoPago = {
+            abono: montoAplicar,
             cargo: 0,
-            metodoPago: item.metodoPago || "Transferencia",
+            metodoPago: metodoAplicar,
             fecha: fechaTxt
-        }];
+        };
+        if (item.referencia) {
+            nuevoPago.referencia = item.referencia;
+        }
+
+        const nuevoHistorial = [...(cliente.historialPagos || []), nuevoPago];
 
         try {
             await updateDoc(doc(db, "clientes", cliente.id), { historialPagos: nuevoHistorial });
             await deleteDoc(doc(db, "comprobantes_pendientes", idExcepcion));
-            alert(`Abono de ${formatearDinero(item.monto)} aplicado a ${cliente.nombre}.`);
+            alert(`Abono de ${formatearDinero(montoAplicar)} aplicado al Folio ${cliente.folio} (${cliente.nombre}).`);
         } catch (error) {
             console.error("Error al aprobar excepción: ", error);
+            alert("Ocurrió un error al aplicar el abono en Firestore.");
         }
     }
 
@@ -1536,20 +1581,22 @@
         const tabla = document.getElementById("cuerpoTablaPagos");
         tabla.innerHTML = "";
         let acumulado = 0;
-        let saldo = cliente.precio;
+        let saldo = (parseFloat(cliente.precio) || 0) + (parseFloat(cliente.cargoAtrasoInicial) || 0);
 
         (cliente.historialPagos || []).forEach((pago, i) => {
-            acumulado += pago.abono;
-            saldo = saldo - pago.abono + pago.cargo;
+            const abonoVal = parseFloat(pago.abono) || 0;
+            const cargoVal = parseFloat(pago.cargo) || 0;
+            acumulado += abonoVal;
+            saldo = saldo - abonoVal + cargoVal;
             let num = String(i + 1).padStart(2, '0');
             let metodo = pago.metodoPago || "Efectivo";
 
             let fila = `<tr>
                 <td><strong>${num}</strong></td>
-                <td>${formatearDinero(pago.abono)}</td>
+                <td>${formatearDinero(abonoVal)}</td>
                 <td><span class="badge bg-secondary">${metodo}</span></td>
                 <td>${formatearDinero(acumulado)}</td>
-                <td>${formatearDinero(pago.cargo)}</td>
+                <td>${formatearDinero(cargoVal)}</td>
                 <td class="text-danger fw-bold">${formatearDinero(saldo)}</td>
                 <td>${pago.fecha}</td>
             </tr>`;
