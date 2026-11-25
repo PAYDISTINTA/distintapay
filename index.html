@@ -154,7 +154,7 @@
                                         <input type="text" id="regNombre" class="form-control" placeholder="Nombre del cliente" required>
                                     </div>
                                 </div>
-                                <!-- NUEVO CAMPO: TELÉFONO WHATSAPP 10 DÍGITOS -->
+                                <!-- CAMPO: TELÉFONO WHATSAPP 10 DÍGITOS -->
                                 <div class="mb-2">
                                     <label class="form-label small fw-bold text-success">📱 Teléfono WhatsApp (10 dígitos)</label>
                                     <input type="tel" id="regTelefono" class="form-control border-success" placeholder="Ej: 4421234567" maxlength="10" pattern="[0-9]{10}" required>
@@ -226,7 +226,26 @@
                     <!-- BÚSQUEDA Y LISTA DE CUENTAS -->
                     <div class="col-lg-7">
                         <div class="card card-modulo p-4 h-100">
-                            <h4 class="fw-bold text-dark mb-3">🔍 Explorador de Cuentas Activas</h4>
+                            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                                <h4 class="fw-bold text-dark mb-0">🔍 Explorador de Cuentas Activas</h4>
+                                <div>
+                                    <input type="file" id="inputCsvContactos" accept=".csv" class="d-none" onchange="procesarCsvContactos(event)">
+                                    <button type="button" class="btn btn-outline-primary btn-sm fw-bold shadow-sm" onclick="document.getElementById('inputCsvContactos').click()">
+                                        📱 Importar Teléfonos (CSV)
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- PANEL DE RESULTADOS DEL CRUCE DE TELÉFONOS -->
+                            <div id="panelCruceContactos" class="alert alert-light border border-primary shadow-sm mb-3 d-none">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6 class="fw-bold text-primary mb-0">📱 Resultado de Importación de Contactos</h6>
+                                    <button type="button" class="btn-close btn-sm" onclick="document.getElementById('panelCruceContactos').classList.add('d-none')"></button>
+                                </div>
+                                <div id="resumenCruceContactos" class="small mb-2"></div>
+                                <div id="tablaRevisionContactos"></div>
+                            </div>
+
                             <input type="text" id="inputBuscar" class="form-control form-control-lg mb-3 shadow-sm" placeholder="Buscar por Folio, Nombre, Teléfono o Artículo..." oninput="filtrarClientes()">
                             <div class="list-group shadow-sm overflow-auto" style="max-height: 550px;" id="listaClientesContainer"></div>
                         </div>
@@ -507,7 +526,7 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
     import { 
-        getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc 
+        getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, writeBatch 
     } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -1713,6 +1732,223 @@
         }
     }
 
+    // =========================================================================
+    // IMPORTADOR MASIVO DE TELÉFONOS DESDE CSV (GOOGLE CONTACTS / EXCEL)
+    // =========================================================================
+    function normalizarNombreCruce(texto) {
+        if (!texto) return '';
+        return texto
+            .toString()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '') // Quita acentos
+            .toUpperCase()
+            .replace(/[^A-Z0-9\s]/g, ' ')    // Quita símbolos
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
+
+    function limpiarTel10Digitos(telRaw) {
+        if (!telRaw) return '';
+        const candidatos = telRaw.toString().split(':::');
+        for (let c of candidatos) {
+            const soloDigitos = c.replace(/\D/g, '');
+            if (soloDigitos.length >= 10) {
+                return soloDigitos.slice(-10);
+            }
+        }
+        return '';
+    }
+
+    function parsearLineaCSVContactos(linea, separador) {
+        const resultado = [];
+        let actual = '';
+        let dentroComillas = false;
+        for (let i = 0; i < linea.length; i++) {
+            const char = linea[i];
+            if (char === '"') {
+                dentroComillas = !dentroComillas;
+            } else if (char === separador && !dentroComillas) {
+                resultado.push(actual.trim());
+                actual = '';
+            } else {
+                actual += char;
+            }
+        }
+        resultado.push(actual.trim());
+        return resultado;
+    }
+
+    async function procesarCsvContactos(event) {
+        const archivo = event.target.files[0];
+        if (!archivo) return;
+
+        const panel = document.getElementById("panelCruceContactos");
+        const resumenDiv = document.getElementById("resumenCruceContactos");
+        const tablaDiv = document.getElementById("tablaRevisionContactos");
+
+        panel.classList.remove("d-none");
+        resumenDiv.innerHTML = `<span class="text-primary fw-bold">⏳ Analizando CSV y cruzando contra ${clientesBD.length} clientes...</span>`;
+        tablaDiv.innerHTML = "";
+
+        const lector = new FileReader();
+        lector.onload = async function(e) {
+            try {
+                const contenido = e.target.result;
+                const lineas = contenido.split(/\r?\n/).filter(l => l.trim() !== '');
+                if (lineas.length < 2) {
+                    resumenDiv.innerHTML = `<span class="text-danger fw-bold">❌ El archivo CSV está vacío.</span>`;
+                    return;
+                }
+
+                const separador = lineas[0].includes(';') && !lineas[0].includes(',') ? ';' : ',';
+                const encabezados = parsearLineaCSVContactos(lineas[0], separador).map(h => h.toLowerCase());
+
+                // Detecta columnas de Google Contactos CSV o CSV simple
+                let idxNombre = encabezados.findIndex(h => h === 'name' || h === 'nombre' || h === 'given name' || h === 'first name');
+                let idxApellido = encabezados.findIndex(h => h === 'family name' || h === 'apellido' || h === 'last name');
+                let idxTel = encabezados.findIndex(h => h.includes('phone 1 - value') || h.includes('telefono') || h.includes('teléfono') || h.includes('celular') || h.includes('phone'));
+
+                if (idxNombre === -1) idxNombre = 0;
+                if (idxTel === -1) idxTel = 1;
+
+                const contactosCSV = [];
+                for (let i = 1; i < lineas.length; i++) {
+                    const cols = parsearLineaCSVContactos(lineas[i], separador);
+                    let nombreCrudo = cols[idxNombre] || '';
+                    if (idxApellido !== -1 && cols[idxApellido]) {
+                        nombreCrudo = `${nombreCrudo} ${cols[idxApellido]}`.trim();
+                    }
+                    const telLimpio = limpiarTel10Digitos(cols[idxTel]);
+                    const nombreNorm = normalizarNombreCruce(nombreCrudo);
+
+                    if (nombreNorm.length >= 4 && telLimpio.length === 10) {
+                        contactosCSV.push({
+                            nombreOriginal: nombreCrudo,
+                            nombreNorm: nombreNorm,
+                            telefono: telLimpio
+                        });
+                    }
+                }
+
+                // Filtrar clientes en memoria (clientesBD) que aún no tienen 10 dígitos
+                const clientesSinTel = clientesBD.filter(c => {
+                    const telActual = (c.telefono || '').toString().replace(/\D/g, '');
+                    return telActual.length < 10 && c.nombre;
+                });
+
+                let exactosGuardados = 0;
+                const sugerencias = [];
+                let batch = writeBatch(db);
+                let opsEnBatch = 0;
+
+                for (const cliente of clientesSinTel) {
+                    const nombreClienteNorm = normalizarNombreCruce(cliente.nombre);
+                    const matchExacto = contactosCSV.find(c => c.nombreNorm === nombreClienteNorm);
+
+                    if (matchExacto) {
+                        const ref = doc(db, "clientes", cliente.id);
+                        batch.update(ref, { telefono: matchExacto.telefono });
+                        exactosGuardados++;
+                        opsEnBatch++;
+
+                        if (opsEnBatch === 450) {
+                            await batch.commit();
+                            batch = writeBatch(db);
+                            opsEnBatch = 0;
+                        }
+                    } else {
+                        // Coincidencia parcial (al menos 2 palabras de más de 2 letras coinciden)
+                        const palabrasCliente = nombreClienteNorm.split(' ').filter(p => p.length > 2);
+                        if (palabrasCliente.length >= 2) {
+                            const matchParcial = contactosCSV.find(c => {
+                                const coincidencias = palabrasCliente.filter(p => c.nombreNorm.includes(p));
+                                return coincidencias.length >= 2;
+                            });
+
+                            if (matchParcial) {
+                                sugerencias.push({
+                                    clienteId: cliente.id,
+                                    folio: cliente.folio || 'S/F',
+                                    nombreFirestore: cliente.nombre,
+                                    nombreCSV: matchParcial.nombreOriginal,
+                                    telefono: matchParcial.telefono
+                                });
+                            }
+                        }
+                    }
+                }
+
+                if (opsEnBatch > 0) {
+                    await batch.commit();
+                }
+
+                resumenDiv.innerHTML = `
+                    <div class="d-flex gap-2 flex-wrap">
+                        <span class="badge bg-success fs-6">✅ ${exactosGuardados} vinculados en automático</span>
+                        <span class="badge bg-warning text-dark fs-6">⚠️ ${sugerencias.length} por confirmar</span>
+                        <span class="badge bg-secondary fs-6">📋 ${clientesSinTel.length} estaban sin teléfono</span>
+                    </div>
+                `;
+
+                if (sugerencias.length > 0) {
+                    let htmlTabla = `
+                        <p class="small text-muted mb-1 mt-2">Revisa estas coincidencias parciales y haz clic en <strong>Vincular</strong> si corresponden:</p>
+                        <div class="table-responsive" style="max-height: 260px;">
+                            <table class="table table-sm table-bordered table-striped align-middle mb-0 small bg-white">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Folio</th>
+                                        <th>En DistintaPAY</th>
+                                        <th>En Celular</th>
+                                        <th>Teléfono</th>
+                                        <th class="text-center">Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody>`;
+
+                    sugerencias.forEach((s, idx) => {
+                        htmlTabla += `
+                            <tr id="fila-sug-${idx}">
+                                <td><strong>${s.folio}</strong></td>
+                                <td>${s.nombreFirestore}</td>
+                                <td>${s.nombreCSV}</td>
+                                <td class="font-monospace">${s.telefono}</td>
+                                <td class="text-center">
+                                    <button type="button" class="btn btn-success btn-sm py-0 px-2 fw-bold"
+                                            onclick="confirmarTelefonoSugerido('${s.clienteId}', '${s.telefono}', 'fila-sug-${idx}')">
+                                        ✔ Vincular
+                                    </button>
+                                </td>
+                            </tr>`;
+                    });
+
+                    htmlTabla += `</tbody></table></div>`;
+                    tablaDiv.innerHTML = htmlTabla;
+                }
+            } catch (err) {
+                console.error("Error al procesar CSV:", err);
+                resumenDiv.innerHTML = `<span class="text-danger fw-bold">❌ Error al procesar: ${err.message}</span>`;
+            } finally {
+                event.target.value = '';
+            }
+        };
+
+        lector.readAsText(archivo, 'UTF-8');
+    }
+
+    async function confirmarTelefonoSugerido(clienteId, telefono, filaId) {
+        try {
+            await updateDoc(doc(db, "clientes", clienteId), { telefono: telefono });
+            const fila = document.getElementById(filaId);
+            if (fila) {
+                fila.classList.add("table-success");
+                fila.cells[4].innerHTML = `<span class="badge bg-success">Guardado ✅</span>`;
+            }
+        } catch (err) {
+            alert("Error al guardar teléfono: " + err.message);
+        }
+    }
+
     // Exposición de funciones al entorno global
     window.registrarCliente = registrarCliente;
     window.filtrarClientes = filtrarClientes;
@@ -1731,6 +1967,8 @@
     window.alternarTextoBotonDia = alternarTextoBotonDia;
     window.aprobarExcepcionIA = aprobarExcepcionIA;
     window.rechazarExcepcionIA = rechazarExcepcionIA;
+    window.procesarCsvContactos = procesarCsvContactos;
+    window.confirmarTelefonoSugerido = confirmarTelefonoSugerido;
 </script>
 
 </body>
