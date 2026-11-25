@@ -262,4 +262,1760 @@
                             <small class="text-muted">Monitoreo consolidado de cobros e indicadores clave</small>
                         </div>
                         <div class="d-flex align-items-center gap-2">
-                            <label for="inputMetaManual" class="form-label small fw-
+                            <label for="inputMetaManual" class="form-label small fw-bold mb-0 text-secondary">🎯 Meta Global ($):</label>
+                            <input type="number" id="inputMetaManual" class="form-control form-control-sm fw-bold text-success" style="width: 140px;" placeholder="80000" value="80000" oninput="ajustarMetaManual()">
+                        </div>
+                    </div>
+
+                    <!-- KPIS GENERALES -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-3 col-6">
+                            <div class="card card-kpi p-3 bg-light border-start border-success border-4">
+                                <small class="text-muted fw-bold d-block">SEMANA ACTUAL</small>
+                                <h4 class="fw-bold text-success mb-0" id="kpiCobradoSemana">$0.00</h4>
+                                <small class="text-secondary" id="kpiTransaccionesSemana">0 abonos</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <div class="card card-kpi p-3 bg-light border-start border-secondary border-4">
+                                <small class="text-muted fw-bold d-block">SEMANA ANTERIOR</small>
+                                <h4 class="fw-bold text-secondary mb-0" id="kpiCobradoSemanaAnterior">$0.00</h4>
+                                <small class="text-primary fw-bold" id="lblComparativaPorcentaje">0% vs anterior</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <div class="card card-kpi p-3 bg-light border-start border-primary border-4">
+                                <small class="text-muted fw-bold d-block">ARTÍCULOS</small>
+                                <h4 class="fw-bold text-primary mb-0" id="kpiTotalArticulos">$0.00</h4>
+                                <small class="text-muted" id="kpiDetalleArticulos">0 abonos</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <div class="card card-kpi p-3 bg-light border-start border-warning border-4">
+                                <small class="text-muted fw-bold d-block">PRÉSTAMOS</small>
+                                <h4 class="fw-bold text-dark mb-0" id="kpiTotalPrestamos">$0.00</h4>
+                                <small class="text-muted" id="kpiDetallePrestamos">0 abonos</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- RESUMEN POR MÉTODO DE PAGO -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-12">
+                            <span class="badge bg-dark px-3 py-2">💳 Cierre de Métodos de Pago Semanal</span>
+                        </div>
+                        <div class="col-md-4 col-12">
+                            <div class="card card-kpi p-3 bg-white border-start border-info border-4">
+                                <small class="text-muted fw-bold d-block">TOTAL TRANSFERENCIA</small>
+                                <h4 class="fw-bold text-info mb-0" id="kpiTotalTransferencia">$0.00</h4>
+                                <small class="text-secondary" id="kpiConteoTransferencia">0 abonos</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-12">
+                            <div class="card card-kpi p-3 bg-white border-start border-primary border-4">
+                                <small class="text-muted fw-bold d-block">TOTAL DEPÓSITO</small>
+                                <h4 class="fw-bold text-primary mb-0" id="kpiTotalDeposito">$0.00</h4>
+                                <small class="text-secondary" id="kpiConteoDeposito">0 abonos</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-12">
+                            <div class="card card-kpi p-3 bg-white border-start border-success border-4">
+                                <small class="text-muted fw-bold d-block">TOTAL EFECTIVO</small>
+                                <h4 class="fw-bold text-success mb-0" id="kpiTotalEfectivo">$0.00</h4>
+                                <small class="text-secondary" id="kpiConteoEfectivo">0 abonos</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- BARRA DE META GLOBAL -->
+                    <div class="card p-3 mb-4 border bg-light">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="fw-bold text-dark mb-0">🎯 Avance Frente a la Meta Global</h6>
+                            <span class="badge bg-primary fs-6" id="lblPorcentajeAlcanzado">0%</span>
+                        </div>
+                        <div class="progress barra-progreso-lg mb-3">
+                            <div id="barraMetaGlobal" class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" style="width: 0%">0%</div>
+                        </div>
+                        <div class="row g-2 text-center text-muted small">
+                            <div class="col-3 border-end"><strong>75%:</strong> <span id="lblMeta75" class="fw-bold text-dark">$0.00</span></div>
+                            <div class="col-3 border-end"><strong>80%:</strong> <span id="lblMeta80" class="fw-bold text-dark">$0.00</span></div>
+                            <div class="col-3 border-end"><strong>85%:</strong> <span id="lblMeta85" class="fw-bold text-dark">$0.00</span></div>
+                            <div class="col-3"><strong>95%:</strong> <span id="lblMeta95" class="fw-bold text-dark">$0.00</span></div>
+                        </div>
+                    </div>
+
+                    <!-- TABLA RESUMEN DE COBROS POR DÍA -->
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped text-center align-middle mb-0">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>DÍA DE COBRO</th>
+                                    <th>INGRESOS REGISTRADOS</th>
+                                    <th>CANTIDAD DE ABONOS</th>
+                                    <th>APORTE AL CICLO (%)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="cuerpoTablaDias"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MÓDULO 3: CONTROL DIARIO DE COBRANZA -->
+            <div class="tab-pane fade" id="modulo-cobranza" role="tabpanel">
+                <div class="card card-modulo p-4 border-start border-success border-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2 border-bottom pb-3">
+                        <div>
+                            <h4 class="fw-bold text-dark mb-0">📋 Control Diario de Clientes (Viernes a Jueves)</h4>
+                            <small class="text-muted">Cortes diarios con desglose de métodos y exportación directa</small>
+                        </div>
+                        <div class="d-flex align-items-center gap-2 no-print flex-wrap">
+                            <button class="btn btn-outline-success btn-sm fw-bold shadow-sm" onclick="exportarControlDiarioCSV()">
+                                📊 Exportar a Excel (CSV)
+                            </button>
+                            <button class="btn btn-outline-danger btn-sm fw-bold shadow-sm" onclick="exportarControlDiarioPDF()">
+                                📄 Exportar a PDF
+                            </button>
+                            <button class="btn btn-outline-dark btn-sm fw-bold shadow-sm" onclick="imprimirControlDiario()">
+                                🖨️ Imprimir
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="cuerpoReporteDetalladoPorDias"></div>
+                </div>
+            </div>
+
+            <!-- MÓDULO 4: PRÓXIMOS A LIQUIDAR -->
+            <div class="tab-pane fade" id="modulo-liquidacion" role="tabpanel">
+                <div class="card card-modulo p-4 border-start border-primary border-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2 border-bottom pb-3">
+                        <div>
+                            <h4 class="fw-bold text-dark mb-0">🎯 Cuentas Próximas a Liquidar (Saldo ≤ $1,500.00)</h4>
+                            <small class="text-muted">Haz clic en cualquier cliente para abrir su tarjeta digital</small>
+                        </div>
+                        <div class="d-flex align-items-center gap-2 no-print flex-wrap">
+                            <span class="badge bg-primary fs-6 px-3 py-2">
+                                Total: <span id="lblTotalMenores1500">0</span>
+                            </span>
+                            <button class="btn btn-outline-success btn-sm fw-bold shadow-sm" onclick="exportarLiquidacionesCSV()">
+                                📥 Exportar CSV
+                            </button>
+                            <button class="btn btn-outline-dark btn-sm fw-bold shadow-sm" onclick="imprimirListaLiquidacion()">
+                                🖨️ Imprimir
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped align-middle mb-0 text-center">
+                            <thead class="table-primary text-dark">
+                                <tr>
+                                    <th style="width: 15%;">N° CLIENTE / FOLIO</th>
+                                    <th style="width: 35%;" class="text-start">NOMBRE COMPLETO</th>
+                                    <th style="width: 30%;" class="text-start">ARTÍCULO / CONCEPTO</th>
+                                    <th style="width: 20%;">SALDO PENDIENTE</th>
+                                </tr>
+                            </thead>
+                            <tbody id="cuerpoTablaMenores1500"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MÓDULO 5: BANDEJA DE EXCEPCIONES IA (COMPROBANTES CON DUDAS O NO VÁLIDOS) -->
+            <div class="tab-pane fade" id="modulo-excepciones" role="tabpanel">
+                <div class="card card-modulo p-4 border-start border-warning border-4">
+                    <div class="mb-3 border-bottom pb-3">
+                        <h4 class="fw-bold text-dark mb-0">⚠️ Bandeja de Revisión Manual (Excepciones de IA)</h4>
+                        <small class="text-muted">Aquí aparecen únicamente los comprobantes recibidos por WhatsApp que no cumplieron las reglas automáticas (foto borrosa, cuenta distinta, número no registrado o dudas del cliente).</small>
+                    </div>
+                    <div id="contenedorExcepcionesIA">
+                        <div class="alert alert-light border text-center text-muted py-4">
+                            No hay comprobantes pendientes de revisión manual en este momento. Todos los pagos válidos se procesan automáticamente.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- VISTA TARJETA DIGITAL INDIVIDUAL -->
+    <div id="vistaTarjeta" class="card card-tarjeta azul p-4 shadow-sm d-none card-tarjeta-azul my-3">
+        <div class="mb-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div id="controlesNavegacion">
+                <button class="btn btn-dark btn-sm me-2 fw-bold" id="btnVolver" onclick="mostrarBuscador()">⬅ Volver a Módulos</button>
+                <button class="btn btn-success btn-sm fw-bold text-white me-2" id="btnWhatsApp" onclick="compartirPorWhatsApp()">💬 Enviar por WhatsApp</button>
+            </div>
+            <div id="controlesEdicionAdmin">
+                <button class="btn btn-warning btn-sm fw-bold me-2 text-dark" id="btnEditarCliente" onclick="activarModoEdicion()">✏️ Editar Datos</button>
+                <button class="btn btn-danger btn-sm fw-bold" onclick="eliminarClienteActual()">🗑️ Eliminar Cliente</button>
+            </div>
+        </div>
+
+        <div class="row header-negocio align-items-center mb-3">
+            <div class="col-8 d-flex align-items-center">
+                <img src="distintacreditosconfondo.png" alt="Distinta.com Logo" class="logo-negocio me-3" onerror="this.style.opacity='0.5'">
+                <div>
+                    <h2 class="fw-bold mb-0">DISTINTA.COM</h2>
+                    <small class="fw-bold text-secondary">Servicio a Domicilio Premium</small>
+                </div>
+            </div>
+            <div class="col-4 text-end">
+                <span class="badge bg-primary fs-5">N° <span id="lblFolio">000</span></span>
+            </div>
+        </div>
+
+        <div class="row g-3 mb-4" id="contenedorDatosCliente"></div>
+
+        <!-- PANEL DE CAPTURA CON SELECTOR DE MÉTODO DE PAGO -->
+        <div id="seccionAdmin" class="card p-3 mb-4 bg-light border-0 shadow-sm text-dark">
+            <h6 class="fw-bold mb-2">Capturar Abono Manual</h6>
+            <div class="row g-2">
+                <div class="col-6 col-md-3">
+                    <label class="form-label small fw-bold mb-1">Abono ($)</label>
+                    <input type="number" id="inputAbono" class="form-control" placeholder="Monto" required>
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label small fw-bold mb-1">Cargo Atraso ($)</label>
+                    <input type="number" id="inputCargo" class="form-control" placeholder="Cargo" value="0">
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label small fw-bold mb-1">Método de Pago</label>
+                    <select id="inputMetodoPago" class="form-select" required>
+                        <option value="Transferencia" selected>Transferencia</option>
+                        <option value="Depósito">Depósito</option>
+                        <option value="Efectivo">Efectivo</option>
+                    </select>
+                </div>
+                <div class="col-6 col-md-3">
+                    <label class="form-label small fw-bold mb-1">Fecha de Pago</label>
+                    <input type="date" id="inputFechaPago" class="form-control">
+                </div>
+                <div class="col-12 col-md-2 d-flex align-items-end">
+                    <button class="btn btn-success w-100 fw-bold" onclick="agregarPagoAClienteActual()">Registrar</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped tabla-pagos">
+                <thead>
+                    <tr>
+                        <th>N°/FIRMA</th>
+                        <th>ABONO</th>
+                        <th>MÉTODO</th>
+                        <th>PAGADO</th>
+                        <th>CARGO</th>
+                        <th>SALDO</th>
+                        <th>FECHA</th>
+                    </tr>
+                </thead>
+                <tbody id="cuerpoTablaPagos"></tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<!-- Bootstrap 5 JavaScript Bundle -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Firebase Firestore Modular SDK v9 -->
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+    import { 
+        getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, writeBatch 
+    } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyAYeGb5fF4DZ0lEXbxaZElqv1R9-a_cmsQ",
+        authDomain: "distintapay.firebaseapp.com",
+        projectId: "distintapay",
+        storageBucket: "distintapay.firebasestorage.app",
+        messagingSenderId: "967537703357",
+        appId: "1:967537703357:web:063794ad2d22ffe33c3ad4",
+        measurementId: "G-2T3NXLGRMX"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    let clientesBD = [];
+    let excepcionesBD = [];
+    let clientesFiltradosLiquidacion = [];
+    let reporteDetalladoExportar = [];
+    let clienteSeleccionadoIndex = null;
+    let editando = false;
+
+    const metaGuardada = localStorage.getItem("metaCobranzaDistinta");
+    if (metaGuardada) {
+        document.getElementById("inputMetaManual").value = metaGuardada;
+    }
+
+    const parametrosUrl = new URLSearchParams(window.location.search);
+    if (parametrosUrl.get("modo") === "cliente") {
+        const panelCarga = document.getElementById("pantallaCargandoCliente");
+        if (panelCarga) panelCarga.classList.remove("d-none");
+    }
+
+    function alternarTextoBotonDia(btn) {
+        const estaOculto = btn.getAttribute('aria-expanded') === 'true';
+        btn.innerText = estaOculto ? '🔽 Ver Clientes' : '🔼 Ocultar Clientes';
+    }
+
+    function formatearDinero(cantidad) {
+        return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(cantidad);
+    }
+
+    function parsearFechaTexto(fechaTexto) {
+        const partes = fechaTexto.split("/");
+        const dia = parseInt(partes[0], 10);
+        const mes = parseInt(partes[1], 10) - 1;
+        return new Date(2026, mes, dia);
+    }
+
+    function obtenerRangoCiclo(offsetSemanas = 0) {
+        const hoy = new Date();
+        const diaSemana = hoy.getDay();
+        let diasDesdeViernes = diaSemana >= 5 ? diaSemana - 5 : diaSemana + 2;
+
+        let viernesInicio = new Date(hoy);
+        viernesInicio.setDate(hoy.getDate() - diasDesdeViernes - (offsetSemanas * 7));
+        viernesInicio.setHours(0, 0, 0, 0);
+
+        let juevesFin = new Date(viernesInicio);
+        juevesFin.setDate(viernesInicio.getDate() + 6);
+        juevesFin.setHours(23, 59, 59, 999);
+
+        return { inicio: viernesInicio, fin: juevesFin };
+    }
+
+    // Escuchar colección principal de clientes
+    onSnapshot(collection(db, "clientes"), (snapshot) => {
+        clientesBD = [];
+        snapshot.forEach((doc) => {
+            clientesBD.push({ id: doc.id, ...doc.data() });
+        });
+
+        if (clienteSeleccionadoIndex !== null) {
+            const idActual = document.getElementById("lblFolio").getAttribute("data-db-id");
+            const nuevoIndex = clientesBD.findIndex(c => c.id === idActual);
+            if (nuevoIndex !== -1) {
+                clienteSeleccionadoIndex = nuevoIndex;
+                const cliente = clientesBD[clienteSeleccionadoIndex];
+                if (!editando) restaurarVistaDatosFijos(cliente);
+                renderizarHistorialCliente(cliente);
+            }
+        }
+        filtrarClientes();
+        procesarMetricas();
+        generarReporteDetalladoPorDias();
+        generarRelacionMenores1500();
+        verificarPermisosAcceso();
+    });
+
+    // Escuchar bandeja de excepciones de IA (comprobantes_pendientes)
+    onSnapshot(collection(db, "comprobantes_pendientes"), (snapshot) => {
+        excepcionesBD = [];
+        snapshot.forEach((doc) => {
+            excepcionesBD.push({ id: doc.id, ...doc.data() });
+        });
+        renderizarBandejaExcepciones();
+    });
+
+    function renderizarBandejaExcepciones() {
+        const contenedor = document.getElementById("contenedorExcepcionesIA");
+        const badge = document.getElementById("badgePendientesIA");
+        if (!contenedor || !badge) return;
+
+        if (excepcionesBD.length === 0) {
+            badge.classList.add("d-none");
+            contenedor.innerHTML = `<div class="alert alert-light border text-center text-muted py-4">No hay comprobantes pendientes de revisión manual en este momento. Todos los pagos válidos se procesan automáticamente.</div>`;
+            return;
+        }
+
+        badge.classList.remove("d-none");
+        badge.innerText = excepcionesBD.length;
+
+        let html = `<div class="row g-3">`;
+        excepcionesBD.forEach(item => {
+            const folioInicial = (item.folio && item.folio !== "N/A") ? item.folio : "";
+            const montoInicial = parseFloat(item.monto) || 0;
+            const metodoInicial = item.metodoPago || "Transferencia";
+
+            html += `
+                <div class="col-md-6">
+                    <div class="card border-warning shadow-sm p-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="badge bg-warning text-dark">Motivo: ${item.motivo || 'Requiere revisión'}</span>
+                            <small class="text-muted">Tel: ${item.telefono || 'Desconocido'}</small>
+                        </div>
+                        <p class="mb-1"><strong>Cliente Detectado:</strong> ${item.nombreCliente || 'No identificado'} (Folio OCR: ${item.folio || 'N/A'})</p>
+                        <p class="mb-2 small text-muted"><strong>Mensaje del cliente:</strong> "${item.mensajeCliente || 'Sin texto adicional'}"</p>
+                        <div class="row g-2 mb-2">
+                            <div class="col-4">
+                                <label class="form-label small fw-bold mb-1">Folio Cliente</label>
+                                <input type="text" id="folioExc_${item.id}" class="form-control form-control-sm" value="${folioInicial}" placeholder="Ej: 272D">
+                            </div>
+                            <div class="col-4">
+                                <label class="form-label small fw-bold mb-1">Monto ($)</label>
+                                <input type="number" step="0.01" id="montoExc_${item.id}" class="form-control form-control-sm" value="${montoInicial}">
+                            </div>
+                            <div class="col-4">
+                                <label class="form-label small fw-bold mb-1">Método</label>
+                                <select id="metodoExc_${item.id}" class="form-select form-select-sm">
+                                    <option value="Transferencia" ${metodoInicial === 'Transferencia' ? 'selected' : ''}>Transferencia</option>
+                                    <option value="Depósito" ${metodoInicial === 'Depósito' ? 'selected' : ''}>Depósito</option>
+                                    <option value="Efectivo" ${metodoInicial === 'Efectivo' ? 'selected' : ''}>Efectivo</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="d-flex gap-2 mt-2">
+                            <button class="btn btn-success btn-sm fw-bold flex-fill" onclick="aprobarExcepcionIA('${item.id}')">✅ Aprobar y Aplicar</button>
+                            <button class="btn btn-outline-danger btn-sm fw-bold" onclick="rechazarExcepcionIA('${item.id}')">❌ Descartar</button>
+                        </div>
+                    </div>
+                </div>`;
+        });
+        html += `</div>`;
+        contenedor.innerHTML = html;
+    }
+
+    async function aprobarExcepcionIA(idExcepcion) {
+        const item = excepcionesBD.find(e => e.id === idExcepcion);
+        if (!item) return;
+
+        const inputFolioEl = document.getElementById(`folioExc_${idExcepcion}`);
+        const inputMontoEl = document.getElementById(`montoExc_${idExcepcion}`);
+        const selectMetodoEl = document.getElementById(`metodoExc_${idExcepcion}`);
+
+        const folioAplicar = (inputFolioEl ? inputFolioEl.value.trim() : "") || ((item.folio && item.folio !== "N/A") ? item.folio.trim() : "");
+        const montoAplicar = inputMontoEl ? parseFloat(inputMontoEl.value) : (parseFloat(item.monto) || 0);
+        const metodoAplicar = selectMetodoEl ? selectMetodoEl.value : (item.metodoPago || "Transferencia");
+
+        if (!folioAplicar) {
+            alert("Ingresa el Folio del cliente al que deseas aplicar este comprobante.");
+            return;
+        }
+
+        if (isNaN(montoAplicar) || montoAplicar <= 0) {
+            alert("Ingresa un monto válido mayor a $0.00 antes de aplicar el abono.");
+            return;
+        }
+
+        const clienteIndex = clientesBD.findIndex(c => String(c.folio || "").trim().toLowerCase() === folioAplicar.toLowerCase());
+        if (clienteIndex === -1) {
+            alert(`No se encontró ningún cliente con el Folio "${folioAplicar}".`);
+            return;
+        }
+
+        const cliente = clientesBD[clienteIndex];
+        const h = new Date();
+        const fechaTxt = item.fecha || `${String(h.getDate()).padStart(2, '0')}/${String(h.getMonth() + 1).padStart(2, '0')}`;
+
+        const nuevoPago = {
+            abono: montoAplicar,
+            cargo: 0,
+            metodoPago: metodoAplicar,
+            fecha: fechaTxt
+        };
+        if (item.referencia) {
+            nuevoPago.referencia = item.referencia;
+        }
+
+        const nuevoHistorial = [...(cliente.historialPagos || []), nuevoPago];
+
+        // Auto-aprendizaje: si el cliente no tenía teléfono de 10 dígitos, guarda el teléfono desde donde envió el comprobante
+        const datosActualizar = { historialPagos: nuevoHistorial };
+        const telActualCliente = (cliente.telefono || "").toString().replace(/\D/g, '');
+        const telRemitente = (item.telefono || "").toString().replace(/\D/g, '').slice(-10);
+        let avisoTelGuardado = "";
+
+        if (telActualCliente.length < 10 && telRemitente.length === 10) {
+            datosActualizar.telefono = telRemitente;
+            avisoTelGuardado = `\n📱 Teléfono ${telRemitente} vinculado automáticamente a la cuenta.`;
+        }
+
+        try {
+            await updateDoc(doc(db, "clientes", cliente.id), datosActualizar);
+            await deleteDoc(doc(db, "comprobantes_pendientes", idExcepcion));
+            alert(`Abono de ${formatearDinero(montoAplicar)} aplicado al Folio ${cliente.folio} (${cliente.nombre}).${avisoTelGuardado}`);
+        } catch (error) {
+            console.error("Error al aprobar excepción: ", error);
+            alert("Ocurrió un error al aplicar el abono en Firestore.");
+        }
+    }
+
+    async function rechazarExcepcionIA(idExcepcion) {
+        if (confirm("¿Descartar este registro de la bandeja de revisión?")) {
+            try {
+                await deleteDoc(doc(db, "comprobantes_pendientes", idExcepcion));
+            } catch (error) {
+                console.error("Error al descartar: ", error);
+            }
+        }
+    }
+
+    // Alta de cliente incluyendo el campo Teléfono WhatsApp
+    async function registrarCliente(event) {
+        event.preventDefault();
+        const folio = document.getElementById("regNumero").value.trim();
+        const nombre = document.getElementById("regNombre").value.trim();
+        const telefono = document.getElementById("regTelefono").value.replace(/\D/g, '').slice(-10);
+        const direccion = document.getElementById("regDireccion").value.trim();
+        const categoria = document.getElementById("regCategoria").value;
+        const periodo = document.getElementById("regPeriodo").value;
+        const zona = document.getElementById("regZona").value;
+        const diaCobro = document.getElementById("regDiaCobro").value;
+        const articulo = document.getElementById("regArticulo").value.trim();
+        const precio = parseFloat(document.getElementById("regPrecio").value);
+        const abonoSemanal = parseFloat(document.getElementById("regAbono").value);
+        const cargoAtrasoInicial = parseFloat(document.getElementById("regCargoAtraso").value) || 0;
+
+        try {
+            await addDoc(collection(db, "clientes"), {
+                folio,
+                nombre,
+                telefono,
+                direccion,
+                categoria,
+                periodo,
+                zona,
+                diaCobro,
+                articulo,
+                precio,
+                abonoSemanal,
+                cargoAtrasoInicial,
+                historialPagos: []
+            });
+            document.getElementById("formNuevoCliente").reset();
+            document.getElementById("regCargoAtraso").value = "0";
+            alert("Cliente registrado exitosamente.");
+        } catch (error) {
+            console.error("Error al registrar cliente: ", error);
+        }
+    }
+
+    function filtrarClientes() {
+        const query = document.getElementById("inputBuscar").value.toLowerCase();
+        const container = document.getElementById("listaClientesContainer");
+        if (!container) return;
+        container.innerHTML = "";
+
+        let totalClientesListados = 0;
+
+        clientesBD.forEach((cliente, index) => {
+            const tel = cliente.telefono || "";
+            if (cliente.nombre.toLowerCase().includes(query) || cliente.folio.toLowerCase().includes(query) || tel.includes(query) || (cliente.articulo || '').toLowerCase().includes(query)) {
+                let totalPagado = (cliente.historialPagos || []).reduce((sum, p) => sum + p.abono, 0);
+                let totalCargos = (cliente.historialPagos || []).reduce((sum, p) => sum + p.cargo, 0);
+                let saldoActual = cliente.precio + totalCargos - totalPagado;
+
+                totalClientesListados++;
+                let cat = cliente.categoria || "Artículos";
+                let per = cliente.periodo || "Semanal";
+                let badgeTel = tel ? `<span class="badge bg-success ms-1">📱 ${tel}</span>` : `<span class="badge bg-secondary ms-1">Sin tel.</span>`;
+
+                let item = `<div class="list-group-item list-group-item-action lista-clientes-item d-flex justify-content-between align-items-center" onclick="seleccionarCliente(${index})">
+                    <div>
+                        <span class="badge bg-primary me-1">N° ${cliente.folio}</span>
+                        <strong>${cliente.nombre}</strong> ${badgeTel}
+                        <br><small class="text-muted">${cat} (${per}) - ${cliente.articulo} | Cobro: ${cliente.diaCobro || 'Sin día'}</small>
+                    </div>
+                    <span class="badge bg-danger">Saldo: ${formatearDinero(saldoActual)}</span>
+                </div>`;
+                container.innerHTML += item;
+            }
+        });
+
+        const lblTotal = document.getElementById("lblSumaTotalActiva");
+        if (lblTotal) lblTotal.innerText = totalClientesListados;
+    }
+
+    function generarReporteDetalladoPorDias() {
+        const contenedor = document.getElementById("cuerpoReporteDetalladoPorDias");
+        if (!contenedor) return;
+
+        contenedor.innerHTML = "";
+        reporteDetalladoExportar = [];
+
+        const cicloActual = obtenerRangoCiclo(0);
+        const diasSemana = ["Viernes", "Sábado", "Domingo", "Lunes", "Martes", "Miércoles", "Jueves"];
+        const mapaDiasNombre = { 5: "Viernes", 6: "Sábado", 0: "Domingo", 1: "Lunes", 2: "Martes", 3: "Miércoles", 4: "Jueves" };
+        const offsetDias = { "Viernes": 0, "Sábado": 1, "Domingo": 2, "Lunes": 3, "Martes": 4, "Miércoles": 5, "Jueves": 6 };
+        const hoy = new Date();
+
+        let agrupacionPorDia = { "Viernes": [], "Sábado": [], "Domingo": [], "Lunes": [], "Martes": [], "Miércoles": [], "Jueves": [] };
+
+        clientesBD.forEach((c, idx) => {
+            let totalPagado = (c.historialPagos || []).reduce((sum, p) => sum + p.abono, 0);
+            let totalCargos = (c.historialPagos || []).reduce((sum, p) => sum + p.cargo, 0);
+            let saldoActual = c.precio + totalCargos - totalPagado;
+
+            let pagoCiclo = null;
+            (c.historialPagos || []).forEach(p => {
+                let fP = parsearFechaTexto(p.fecha);
+                if (fP >= cicloActual.inicio && fP <= cicloActual.fin) {
+                    pagoCiclo = p;
+                }
+            });
+
+            let semanasConsecutivas = 0;
+            if ((c.historialPagos || []).length === 0) {
+                semanasConsecutivas = 1;
+            } else {
+                let ultimoPago = c.historialPagos[c.historialPagos.length - 1];
+                let fechaUltimo = parsearFechaTexto(ultimoPago.fecha);
+                let diffTiempo = hoy - fechaUltimo;
+                let diasDiff = Math.floor(diffTiempo / (1000 * 60 * 60 * 24));
+                semanasConsecutivas = Math.max(0, Math.floor(diasDiff / 7));
+            }
+
+            let fechaExacta = "";
+            if (pagoCiclo) {
+                fechaExacta = pagoCiclo.fecha;
+            } else {
+                let fCalendario = new Date(cicloActual.inicio);
+                let diasSumar = offsetDias[c.diaCobro] !== undefined ? offsetDias[c.diaCobro] : 0;
+                fCalendario.setDate(fCalendario.getDate() + diasSumar);
+                let d = String(fCalendario.getDate()).padStart(2, '0');
+                let m = String(fCalendario.getMonth() + 1).padStart(2, '0');
+                fechaExacta = `${d}/${m}`;
+            }
+
+            let itemCliente = {
+                ...c,
+                indexOriginal: idx,
+                saldoActual: saldoActual,
+                abonoRegistrado: pagoCiclo ? pagoCiclo.abono : 0,
+                metodoPagoRegistrado: pagoCiclo ? (pagoCiclo.metodoPago || "Efectivo") : "-",
+                semanasConsecutivas: semanasConsecutivas,
+                fechaExacta: fechaExacta
+            };
+
+            if (pagoCiclo) {
+                let fP = parsearFechaTexto(pagoCiclo.fecha);
+                let diaReal = mapaDiasNombre[fP.getDay()];
+                if (diaReal && agrupacionPorDia[diaReal]) {
+                    agrupacionPorDia[diaReal].push(itemCliente);
+                }
+            } else {
+                let diaProgramado = c.diaCobro;
+                if (diaProgramado && agrupacionPorDia[diaProgramado]) {
+                    agrupacionPorDia[diaProgramado].push(itemCliente);
+                }
+            }
+        });
+
+        diasSemana.forEach(diaNombre => {
+            let clientesDelDia = agrupacionPorDia[diaNombre];
+            if (clientesDelDia.length === 0) return;
+
+            clientesDelDia.sort((a, b) => {
+                let numA = parseInt(a.folio.replace(/\D/g, ''), 10) || 0;
+                let numB = parseInt(b.folio.replace(/\D/g, ''), 10) || 0;
+                return numA - numB;
+            });
+
+            let prestamos = clientesDelDia.filter(c => (c.categoria === "Préstamos") || 
+                                                       (c.articulo || "").toLowerCase().includes("préstamo") || 
+                                                       (c.articulo || "").toLowerCase().includes("prestamo") || 
+                                                       (c.articulo || "").toLowerCase().includes("pp"));
+            let articulos = clientesDelDia.filter(c => !prestamos.includes(c));
+
+            let totalMetaDia = clientesDelDia.reduce((sum, c) => sum + (c.abonoSemanal || 0), 0);
+            let totalCobradoDia = clientesDelDia.reduce((sum, c) => sum + c.abonoRegistrado, 0);
+
+            let htmlBloque = `
+                <div class="card p-3 mb-3 border shadow-sm">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 bg-light p-2 rounded border">
+                        <div>
+                            <h5 class="fw-bold text-dark mb-0 d-inline-block me-2">📅 ${diaNombre.toUpperCase()}</h5>
+                            <span class="badge bg-secondary me-2">Meta: ${formatearDinero(totalMetaDia)}</span>
+                            <span class="badge bg-success">Cobrado: ${formatearDinero(totalCobradoDia)}</span>
+                        </div>
+                        <div>
+                            <button class="btn btn-outline-primary btn-sm fw-bold shadow-sm" type="button" 
+                                    data-bs-toggle="collapse" 
+                                    data-bs-target="#contenedorDia_${diaNombre}" 
+                                    aria-expanded="false" 
+                                    aria-controls="contenedorDia_${diaNombre}"
+                                    onclick="alternarTextoBotonDia(this)">
+                                🔽 Ver Clientes
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="collapse mt-3" id="contenedorDia_${diaNombre}">`;
+
+            function renderizarTablaCategoria(lista, tituloCat, colorBadge) {
+                if (lista.length === 0) return "";
+
+                let filas = "";
+                lista.forEach(c => {
+                    let cuota = c.abonoSemanal || 0;
+                    let montoAtraso = c.semanasConsecutivas * cuota;
+
+                    let detalleAtrasoTexto = "";
+                    let fraseConfirmacion = "";
+
+                    if (c.semanasConsecutivas > 0) {
+                        detalleAtrasoTexto = `Presenta un atraso de *${c.semanasConsecutivas} semana(s)* con un importe pendiente de *${formatearDinero(montoAtraso)}*.\n\n`;
+                        fraseConfirmacion = `Agradecemos confirmar la fecha de su pago. Para cualquier duda o aclaración, por favor contáctenos.`;
+                    }
+
+                    const msgWhatsApp = `Hola *${c.nombre}*, le saludamos de DISTINTA.COM.\n\n` +
+                                        `Le informamos el estado actual de su cuenta:\n` +
+                                        `🔹 *Crédito N°:* ${c.folio}\n` +
+                                        `🔹 *Concepto:* ${c.articulo}\n` +
+                                        `🔹 *Saldo Restante:* ${formatearDinero(c.saldoActual)}\n\n` +
+                                        detalleAtrasoTexto +
+                                        fraseConfirmacion;
+
+                    const telLimpio = (c.telefono || "").replace(/\D/g, '');
+                    const paramTel = telLimpio.length === 10 ? `phone=521${telLimpio}&` : "";
+                    const urlWha = `https://api.whatsapp.com/send?${paramTel}text=${encodeURIComponent(msgWhatsApp.trim())}`;
+
+                    reporteDetalladoExportar.push({
+                        fecha: c.fechaExacta,
+                        folio: c.folio,
+                        nombre: c.nombre,
+                        articulo: c.articulo,
+                        cobradoSemana: c.abonoRegistrado,
+                        metodoPago: c.metodoPagoRegistrado
+                    });
+
+                    let estadoBadge = c.abonoRegistrado > 0 
+                        ? `<span class="badge bg-success">Pagado: ${formatearDinero(c.abonoRegistrado)}</span>`
+                        : `<span class="badge bg-danger">Sin Abono ($0.00)</span>`;
+
+                    let metodoBadge = c.abonoRegistrado > 0 
+                        ? `<span class="badge bg-info text-dark">${c.metodoPagoRegistrado}</span>` 
+                        : `<span class="text-muted">-</span>`;
+
+                    filas += `
+                        <tr class="fila-liquidacion" onclick="seleccionarCliente(${c.indexOriginal})" title="Clic para abrir cuenta">
+                            <td><span class="badge bg-dark">N° ${c.folio}</span></td>
+                            <td class="text-start"><strong>${c.nombre}</strong><br><small class="text-muted">${c.articulo}</small></td>
+                            <td class="fw-bold text-primary">${formatearDinero(c.abonoSemanal)}</td>
+                            <td>${estadoBadge}</td>
+                            <td>${metodoBadge}</td>
+                            <td>
+                                <span class="badge bg-warning text-dark">${c.semanasConsecutivas} sem</span>
+                                <br><small class="text-danger fw-bold">${formatearDinero(montoAtraso)}</small>
+                            </td>
+                            <td class="text-danger fw-bold">${formatearDinero(c.saldoActual)}</td>
+                            <td onclick="event.stopPropagation()">
+                                <a href="${urlWha}" target="_blank" class="btn btn-sm btn-success fw-bold shadow-sm px-2 py-1">💬 Recordar</a>
+                            </td>
+                        </tr>`;
+                });
+
+                return `
+                    <div class="mt-2 mb-3">
+                        <span class="badge ${colorBadge} mb-1 fs-6">${tituloCat}</span>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped text-center align-middle mb-0 small">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>FOLIO</th>
+                                        <th class="text-start">CLIENTE / ARTÍCULO</th>
+                                        <th>CUOTA PACTADA</th>
+                                        <th>ABONO SEMANAL</th>
+                                        <th>MÉTODO</th>
+                                        <th>SEM. CONSECUTIVAS / ATRASO</th>
+                                        <th>SALDO TOTAL</th>
+                                        <th>ACCIONES</th>
+                                    </tr>
+                                </thead>
+                                <tbody>${filas}</tbody>
+                            </table>
+                        </div>
+                    </div>`;
+            }
+
+            htmlBloque += renderizarTablaCategoria(prestamos, "PRÉSTAMOS", "bg-warning text-dark");
+            htmlBloque += renderizarTablaCategoria(articulos, "ARTÍCULOS", "bg-primary text-white");
+            htmlBloque += `</div></div>`;
+
+            contenedor.innerHTML += htmlBloque;
+        });
+    }
+
+    function exportarControlDiarioCSV() {
+        const clientesConPago = (reporteDetalladoExportar || []).filter(r => r.cobradoSemana > 0);
+
+        if (clientesConPago.length === 0) {
+            alert("No hay pagos registrados en la semana para exportar.");
+            return;
+        }
+
+        let csv = "\uFEFF";
+        csv += "Fecha,Folio,Nombre Completo,Articulo,Metodo de Pago,Importe Cobrado\n";
+
+        const pagosPorFecha = {};
+        clientesConPago.forEach(r => {
+            if (!pagosPorFecha[r.fecha]) {
+                pagosPorFecha[r.fecha] = [];
+            }
+            pagosPorFecha[r.fecha].push(r);
+        });
+
+        let granTotalCobrado = 0;
+        let sumaTotalTransf = 0, abonosTotalTransf = 0;
+        let sumaTotalDepo = 0, abonosTotalDepo = 0;
+        let sumaTotalEfec = 0, abonosTotalEfec = 0;
+
+        Object.keys(pagosPorFecha).forEach(fecha => {
+            const listaDia = pagosPorFecha[fecha];
+            let subtotalDia = 0;
+            let subDiaTransf = 0, subDiaDepo = 0, subDiaEfec = 0;
+
+            listaDia.forEach(r => {
+                let nom = `"${r.nombre.replace(/"/g, '""')}"`;
+                let art = `"${r.articulo.replace(/"/g, '""')}"`;
+                
+                csv += `"${r.fecha}","${r.folio}",${nom},${art},"${r.metodoPago}",${r.cobradoSemana.toFixed(2)}\n`;
+
+                subtotalDia += r.cobradoSemana;
+                granTotalCobrado += r.cobradoSemana;
+
+                if (r.metodoPago === "Transferencia") {
+                    subDiaTransf += r.cobradoSemana;
+                    sumaTotalTransf += r.cobradoSemana;
+                    abonosTotalTransf++;
+                } else if (r.metodoPago === "Depósito") {
+                    subDiaDepo += r.cobradoSemana;
+                    sumaTotalDepo += r.cobradoSemana;
+                    abonosTotalDepo++;
+                } else {
+                    subDiaEfec += r.cobradoSemana;
+                    sumaTotalEfec += r.cobradoSemana;
+                    abonosTotalEfec++;
+                }
+            });
+
+            csv += `"", "", "", "CORTE DIARIO (${fecha}) -> Transferencia: $${subDiaTransf.toFixed(2)} | Depósito: $${subDiaDepo.toFixed(2)} | Efectivo: $${subDiaEfec.toFixed(2)}", "TOTAL DÍA:", "${subtotalDia.toFixed(2)}"\n`;
+            csv += "\n";
+        });
+
+        csv += `"", "", "", "RESUMEN DE CORTE DE CAJA SEMANAL (CIERRE GENERAL)", "", ""\n`;
+        csv += `"", "", "", "TOTAL TRANSFERENCIA", "(${abonosTotalTransf} abonos)", "${sumaTotalTransf.toFixed(2)}"\n`;
+        csv += `"", "", "", "TOTAL DEPÓSITO", "(${abonosTotalDepo} abonos)", "${sumaTotalDepo.toFixed(2)}"\n`;
+        csv += `"", "", "", "TOTAL EFECTIVO", "(${abonosTotalEfec} abonos)", "${sumaTotalEfec.toFixed(2)}"\n`;
+        csv += `"", "", "", "GRAN TOTAL SEMANAL", "(${clientesConPago.length} abonos)", "${granTotalCobrado.toFixed(2)}"\n`;
+
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const a = document.createElement("a");
+        const fechaHoy = new Date().toISOString().slice(0, 10);
+        a.href = URL.createObjectURL(blob);
+        a.setAttribute("download", `reporte_cobranza_desglose_${fechaHoy}.csv`);
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    }
+
+    function exportarControlDiarioPDF() {
+        const clientesConPago = (reporteDetalladoExportar || []).filter(r => r.cobradoSemana > 0);
+
+        if (clientesConPago.length === 0) {
+            alert("No hay pagos registrados en la semana para exportar a PDF.");
+            return;
+        }
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('portrait');
+
+        doc.setFontSize(15);
+        doc.setTextColor(0, 86, 179);
+        doc.text("DISTINTA.COM - REPORTE DE COBRANZA", 14, 15);
+        
+        doc.setFontSize(9);
+        doc.setTextColor(100);
+        const fechaHoy = new Date().toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' });
+        doc.text(`Fecha de emisión: ${fechaHoy} | Ciclo Activo: Viernes a Jueves`, 14, 21);
+
+        const columnas = [
+            { header: 'Fecha', dataKey: 'fecha' },
+            { header: 'Folio', dataKey: 'folio' },
+            { header: 'Cliente', dataKey: 'nombre' },
+            { header: 'Artículo', dataKey: 'articulo' },
+            { header: 'Método', dataKey: 'metodoPago' },
+            { header: 'Importe Cobrado', dataKey: 'cobradoSemana' }
+        ];
+
+        const pagosPorFecha = {};
+        clientesConPago.forEach(r => {
+            if (!pagosPorFecha[r.fecha]) {
+                pagosPorFecha[r.fecha] = [];
+            }
+            pagosPorFecha[r.fecha].push(r);
+        });
+
+        const filasPDF = [];
+        let granTotalCobradoPDF = 0;
+        let totalTransfPDF = 0, totalDepoPDF = 0, totalEfecPDF = 0;
+
+        Object.keys(pagosPorFecha).forEach(fecha => {
+            const listaDia = pagosPorFecha[fecha];
+            let subtotalDia = 0;
+            let subDiaTransf = 0, subDiaDepo = 0, subDiaEfec = 0;
+
+            listaDia.forEach(r => {
+                subtotalDia += r.cobradoSemana;
+                granTotalCobradoPDF += r.cobradoSemana;
+
+                if (r.metodoPago === "Transferencia") {
+                    subDiaTransf += r.cobradoSemana;
+                    totalTransfPDF += r.cobradoSemana;
+                } else if (r.metodoPago === "Depósito") {
+                    subDiaDepo += r.cobradoSemana;
+                    totalDepoPDF += r.cobradoSemana;
+                } else {
+                    subDiaEfec += r.cobradoSemana;
+                    totalEfecPDF += r.cobradoSemana;
+                }
+
+                filasPDF.push({
+                    fecha: r.fecha,
+                    folio: r.folio,
+                    nombre: r.nombre,
+                    articulo: r.articulo,
+                    metodoPago: r.metodoPago,
+                    cobradoSemana: formatearDinero(r.cobradoSemana),
+                    esCorte: false
+                });
+            });
+
+            filasPDF.push({
+                fecha: '',
+                folio: '',
+                nombre: `CORTE (${fecha})`,
+                articulo: `Transf: ${formatearDinero(subDiaTransf)} | Dep: ${formatearDinero(subDiaDepo)} | Efec: ${formatearDinero(subDiaEfec)}`,
+                metodoPago: 'TOTAL DÍA:',
+                cobradoSemana: formatearDinero(subtotalDia),
+                esCorte: true
+            });
+        });
+
+        doc.autoTable({
+            columns: columnas,
+            body: filasPDF,
+            startY: 26,
+            theme: 'striped',
+            styles: { fontSize: 8, cellPadding: 2, halign: 'center' },
+            headStyles: { fillColor: [0, 86, 179], textColor: 255, fontStyle: 'bold' },
+            columnStyles: {
+                fecha: { cellWidth: 18 },
+                folio: { cellWidth: 16 },
+                nombre: { halign: 'left', cellWidth: 50 },
+                articulo: { halign: 'left', cellWidth: 48 },
+                metodoPago: { cellWidth: 26 },
+                cobradoSemana: { halign: 'right', fontStyle: 'bold', cellWidth: 28 }
+            },
+            didParseCell: function(data) {
+                if (data.row.raw && data.row.raw.esCorte) {
+                    data.cell.styles.fillColor = [225, 238, 255];
+                    data.cell.styles.fontStyle = 'bold';
+                    data.cell.styles.textColor = [0, 86, 179];
+                }
+            }
+        });
+
+        let posY = doc.lastAutoTable.finalY + 8;
+        if (posY > 240) {
+            doc.addPage();
+            posY = 20;
+        }
+
+        doc.setFillColor(245, 247, 250);
+        doc.roundedRect(14, posY, 182, 32, 3, 3, 'F');
+        doc.setDrawColor(0, 86, 179);
+        doc.roundedRect(14, posY, 182, 32, 3, 3, 'D');
+
+        doc.setFontSize(10);
+        doc.setTextColor(0, 86, 179);
+        doc.setFont(undefined, 'bold');
+        doc.text("RESUMEN DE CORTE DE CAJA SEMANAL (CIERRE FINAL)", 18, posY + 7);
+
+        doc.setFontSize(8.5);
+        doc.setTextColor(50);
+        doc.setFont(undefined, 'normal');
+        doc.text(`Total en Transferencias: ${formatearDinero(totalTransfPDF)}`, 18, posY + 15);
+        doc.text(`Total en Depósitos: ${formatearDinero(totalDepoPDF)}`, 18, posY + 22);
+        doc.text(`Total en Efectivo: ${formatearDinero(totalEfecPDF)}`, 105, posY + 15);
+
+        doc.setFontSize(10);
+        doc.setTextColor(0, 128, 0);
+        doc.setFont(undefined, 'bold');
+        doc.text(`GRAN TOTAL SEMANAL: ${formatearDinero(granTotalCobradoPDF)}`, 105, posY + 24);
+
+        const fechaArchivo = new Date().toISOString().slice(0, 10);
+        doc.save(`reporte_cobranza_desglose_${fechaArchivo}.pdf`);
+    }
+
+    function imprimirControlDiario() {
+        if (!reporteDetalladoExportar || reporteDetalladoExportar.length === 0) {
+            alert("No hay registros en el reporte para imprimir.");
+            return;
+        }
+        window.print();
+    }
+
+    function generarRelacionMenores1500() {
+        const cuerpoTabla = document.getElementById("cuerpoTablaMenores1500");
+        const lblTotal = document.getElementById("lblTotalMenores1500");
+        if (!cuerpoTabla) return;
+
+        cuerpoTabla.innerHTML = "";
+
+        let clientesConSaldo = clientesBD.map((cliente, indexOriginal) => {
+            let totalPagado = (cliente.historialPagos || []).reduce((sum, p) => sum + p.abono, 0);
+            let totalCargos = (cliente.historialPagos || []).reduce((sum, p) => sum + p.cargo, 0);
+            let saldoActual = cliente.precio + totalCargos - totalPagado;
+            
+            return {
+                indexOriginal: indexOriginal,
+                folio: cliente.folio,
+                nombre: cliente.nombre,
+                articulo: cliente.articulo || "Sin especificar",
+                saldo: saldoActual
+            };
+        });
+
+        clientesFiltradosLiquidacion = clientesConSaldo.filter(c => c.saldo <= 1500 && c.saldo >= 0);
+        clientesFiltradosLiquidacion.sort((a, b) => b.saldo - a.saldo);
+
+        if (lblTotal) lblTotal.innerText = clientesFiltradosLiquidacion.length;
+
+        if (clientesFiltradosLiquidacion.length === 0) {
+            cuerpoTabla.innerHTML = `<tr><td colspan="4" class="text-muted py-3">No hay clientes con saldo igual o menor a $1,500.00 en este momento.</td></tr>`;
+            return;
+        }
+
+        clientesFiltradosLiquidacion.forEach(item => {
+            const saldoHtml = item.saldo === 0 
+                ? `<span class="badge bg-success fs-6">LIQUIDADO ($0.00)</span>` 
+                : `<span class="fw-bold text-danger fs-6">${formatearDinero(item.saldo)}</span>`;
+
+            let fila = `<tr class="fila-liquidacion" onclick="seleccionarCliente(${item.indexOriginal})" title="Clic para abrir tarjeta del cliente">
+                <td><span class="badge bg-dark fs-6">N° ${item.folio}</span></td>
+                <td class="text-start"><strong>${item.nombre}</strong></td>
+                <td class="text-start text-secondary"><small>${item.articulo}</small></td>
+                <td>${saldoHtml}</td>
+            </tr>`;
+            cuerpoTabla.innerHTML += fila;
+        });
+    }
+
+    function exportarLiquidacionesCSV() {
+        if (!clientesFiltradosLiquidacion || clientesFiltradosLiquidacion.length === 0) {
+            alert("No hay clientes en la lista para exportar.");
+            return;
+        }
+
+        let csv = "\uFEFF"; 
+        csv += "Folio,Nombre Completo,Articulo,Saldo\n";
+
+        clientesFiltradosLiquidacion.forEach(c => {
+            let nom = `"${c.nombre.replace(/"/g, '""')}"`;
+            let art = `"${c.articulo.replace(/"/g, '""')}"`;
+            csv += `"${c.folio}",${nom},${art},${c.saldo.toFixed(2)}\n`;
+        });
+
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const a = document.createElement("a");
+        const fechaHoy = new Date().toISOString().slice(0, 10);
+        a.href = URL.createObjectURL(blob);
+        a.setAttribute("download", `clientes_saldo_menor_1500_${fechaHoy}.csv`);
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    }
+
+    function imprimirListaLiquidacion() {
+        if (!clientesFiltradosLiquidacion || clientesFiltradosLiquidacion.length === 0) {
+            alert("No hay clientes en la lista para imprimir.");
+            return;
+        }
+        window.print();
+    }
+
+    function procesarMetricas() {
+        let totalSemanaActual = 0;
+        let abonosSemanaActual = 0;
+        let totalSemanaAnterior = 0;
+
+        let totalArticulos = 0;
+        let abonosArticulos = 0;
+        let totalPrestamos = 0;
+        let abonosPrestamos = 0;
+
+        let totalTransferencia = 0;
+        let conteoTransferencia = 0;
+        let totalDeposito = 0;
+        let conteoDeposito = 0;
+        let totalEfectivo = 0;
+        let conteoEfectivo = 0;
+
+        const cicloActual = obtenerRangoCiclo(0);
+        const cicloAnterior = obtenerRangoCiclo(1);
+
+        const diasSemanaMap = {
+            5: { nombre: "Viernes", total: 0, conteo: 0 },
+            6: { nombre: "Sábado", total: 0, conteo: 0 },
+            0: { nombre: "Domingo", total: 0, conteo: 0 },
+            1: { nombre: "Lunes", total: 0, conteo: 0 },
+            2: { nombre: "Martes", total: 0, conteo: 0 },
+            3: { nombre: "Miércoles", total: 0, conteo: 0 },
+            4: { nombre: "Jueves", total: 0, conteo: 0 }
+        };
+
+        clientesBD.forEach(cliente => {
+            const esPrestamo = (cliente.categoria === "Préstamos") || 
+                               (cliente.articulo || "").toLowerCase().includes("préstamo") || 
+                               (cliente.articulo || "").toLowerCase().includes("prestamo") || 
+                               (cliente.articulo || "").toLowerCase().includes("pp");
+
+            (cliente.historialPagos || []).forEach(pago => {
+                const fPago = parsearFechaTexto(pago.fecha);
+
+                if (fPago >= cicloActual.inicio && fPago <= cicloActual.fin) {
+                    totalSemanaActual += pago.abono;
+                    abonosSemanaActual++;
+
+                    if (esPrestamo) {
+                        totalPrestamos += pago.abono;
+                        abonosPrestamos++;
+                    } else {
+                        totalArticulos += pago.abono;
+                        abonosArticulos++;
+                    }
+
+                    const metodo = pago.metodoPago || "Efectivo";
+                    if (metodo === "Transferencia") {
+                        totalTransferencia += pago.abono;
+                        conteoTransferencia++;
+                    } else if (metodo === "Depósito") {
+                        totalDeposito += pago.abono;
+                        conteoDeposito++;
+                    } else {
+                        totalEfectivo += pago.abono;
+                        conteoEfectivo++;
+                    }
+
+                    const dia = fPago.getDay();
+                    if (diasSemanaMap[dia]) {
+                        diasSemanaMap[dia].total += pago.abono;
+                        diasSemanaMap[dia].conteo++;
+                    }
+                }
+
+                if (fPago >= cicloAnterior.inicio && fPago <= cicloAnterior.fin) {
+                    totalSemanaAnterior += pago.abono;
+                }
+            });
+        });
+
+        document.getElementById("kpiCobradoSemana").innerText = formatearDinero(totalSemanaActual);
+        document.getElementById("kpiTransaccionesSemana").innerText = `${abonosSemanaActual} abonos registrados`;
+        document.getElementById("kpiCobradoSemanaAnterior").innerText = formatearDinero(totalSemanaAnterior);
+
+        let difPorcentaje = totalSemanaAnterior > 0 ? ((totalSemanaActual / totalSemanaAnterior) * 100).toFixed(1) : 100;
+        document.getElementById("lblComparativaPorcentaje").innerText = `${difPorcentaje}% vs semana anterior`;
+
+        document.getElementById("kpiTotalArticulos").innerText = formatearDinero(totalArticulos);
+        document.getElementById("kpiDetalleArticulos").innerText = `${abonosArticulos} abonos`;
+        document.getElementById("kpiTotalPrestamos").innerText = formatearDinero(totalPrestamos);
+        document.getElementById("kpiDetallePrestamos").innerText = `${abonosPrestamos} abonos`;
+
+        document.getElementById("kpiTotalTransferencia").innerText = formatearDinero(totalTransferencia);
+        document.getElementById("kpiConteoTransferencia").innerText = `${conteoTransferencia} abonos`;
+
+        document.getElementById("kpiTotalDeposito").innerText = formatearDinero(totalDeposito);
+        document.getElementById("kpiConteoDeposito").innerText = `${conteoDeposito} abonos`;
+
+        document.getElementById("kpiTotalEfectivo").innerText = formatearDinero(totalEfectivo);
+        document.getElementById("kpiConteoEfectivo").innerText = `${conteoEfectivo} abonos`;
+
+        const metaGlobal = parseFloat(document.getElementById("inputMetaManual").value) || 0;
+        document.getElementById("lblMeta75").innerText = formatearDinero(metaGlobal * 0.75);
+        document.getElementById("lblMeta80").innerText = formatearDinero(metaGlobal * 0.80);
+        document.getElementById("lblMeta85").innerText = formatearDinero(metaGlobal * 0.85);
+        document.getElementById("lblMeta95").innerText = formatearDinero(metaGlobal * 0.95);
+
+        let porcentajeMeta = metaGlobal > 0 ? Math.min(Math.round((totalSemanaActual / metaGlobal) * 100), 100) : 0;
+        document.getElementById("lblPorcentajeAlcanzado").innerText = `${porcentajeMeta}% alcanzado`;
+
+        const barra = document.getElementById("barraMetaGlobal");
+        barra.style.width = `${porcentajeMeta}%`;
+        barra.innerText = `${porcentajeMeta}%`;
+
+        const cuerpoTabla = document.getElementById("cuerpoTablaDias");
+        cuerpoTabla.innerHTML = "";
+        const ordenDias = [5, 6, 0, 1, 2, 3, 4];
+
+        ordenDias.forEach(numDia => {
+            const dato = diasSemanaMap[numDia];
+            const pct = totalSemanaActual > 0 ? ((dato.total / totalSemanaActual) * 100).toFixed(1) : 0;
+            let fila = `<tr>
+                <td><strong>${dato.nombre}</strong></td>
+                <td class="text-success fw-bold">${formatearDinero(dato.total)}</td>
+                <td>${dato.conteo}</td>
+                <td><span class="badge bg-secondary">${pct}%</span></td>
+            </tr>`;
+            cuerpoTabla.innerHTML += fila;
+        });
+    }
+
+    function ajustarMetaManual() {
+        const valor = document.getElementById("inputMetaManual").value;
+        localStorage.setItem("metaCobranzaDistinta", valor);
+        procesarMetricas();
+    }
+
+    function seleccionarCliente(index) {
+        clienteSeleccionadoIndex = index;
+        editando = false;
+        const cliente = clientesBD[index];
+
+        document.getElementById("lblFolio").innerText = cliente.folio;
+        document.getElementById("lblFolio").setAttribute("data-db-id", cliente.id);
+        restaurarVistaDatosFijos(cliente);
+        renderizarHistorialCliente(cliente);
+
+        const hoy = new Date();
+        const y = hoy.getFullYear();
+        const m = String(hoy.getMonth() + 1).padStart(2, '0');
+        const d = String(hoy.getDate()).padStart(2, '0');
+        document.getElementById("inputFechaPago").value = `${y}-${m}-${d}`;
+        document.getElementById("inputMetodoPago").value = "Transferencia";
+
+        document.getElementById("vistaBusqueda").classList.add("d-none");
+        document.getElementById("vistaTarjeta").classList.remove("d-none");
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function restaurarVistaDatosFijos(cliente) {
+        const contenedor = document.getElementById("contenedorDatosCliente");
+        let inicialPenalizacion = cliente.cargoAtrasoInicial || 0;
+        let telVisual = cliente.telefono ? `<span class="badge bg-success">${cliente.telefono}</span>` : `<span class="badge bg-secondary">Sin asignar</span>`;
+
+        contenedor.innerHTML = `
+            <div class="col-md-6">
+                <p class="mb-1"><strong>NOMBRE:</strong> <span>${cliente.nombre}</span></p>
+                <p class="mb-1"><strong>TELÉFONO WHATSAPP:</strong> ${telVisual}</p>
+                <p class="mb-1"><strong>DIRECCIÓN:</strong> <span>${cliente.direccion}</span></p>
+                <p class="mb-1"><strong>ZONA:</strong> <span>${cliente.zona || 'Local'}</span></p>
+                <p class="mb-1"><strong>DÍA DE COBRO:</strong> <span class="badge bg-primary fs-6">${cliente.diaCobro || 'Sin asignar'}</span></p>
+                <p class="mb-1"><strong>TIPO:</strong> <span class="badge bg-secondary">${cliente.categoria || 'Artículos'}</span> <span class="badge bg-dark">${cliente.periodo || 'Semanal'}</span></p>
+            </div>
+            <div class="col-md-6 text-md-end">
+                <p class="mb-1"><strong>CONCEPTO:</strong> <span>${cliente.articulo}</span></p>
+                <p class="mb-1"><strong>PRECIO:</strong> <span>${formatearDinero(cliente.precio)}</span></p>
+                <p class="mb-1"><strong>CARGO INICIAL:</strong> <span>${formatearDinero(inicialPenalizacion)}</span></p>
+                <p class="mb-1"><strong>CUOTA PACTADA:</strong> <span>${formatearDinero(cliente.abonoSemanal)}</span></p>
+            </div>`;
+    }
+
+    async function activarModoEdicion() {
+        const cliente = clientesBD[clienteSeleccionadoIndex];
+        const btn = document.getElementById("btnEditarCliente");
+
+        if (!editando) {
+            editando = true;
+            btn.innerText = "💾 Guardar Cambios";
+            btn.classList.replace("btn-warning", "btn-primary");
+
+            const diasOpciones = ["Viernes", "Sábado", "Domingo", "Lunes", "Martes", "Miércoles", "Jueves"];
+            let optionsDiaHtml = diasOpciones.map(d => `<option value="${d}" ${cliente.diaCobro === d ? 'selected' : ''}>${d}</option>`).join('');
+
+            const contenedor = document.getElementById("contenedorDatosCliente");
+            contenedor.innerHTML = `
+                <div class="col-md-6">
+                    <div class="mb-2"><strong>NOMBRE:</strong><input type="text" id="editNombre" class="form-control form-control-sm" value="${cliente.nombre}"></div>
+                    <div class="mb-2"><strong>TELÉFONO WHATSAPP (10 DÍGITOS):</strong><input type="tel" id="editTelefono" class="form-control form-control-sm border-success" maxlength="10" value="${cliente.telefono || ''}"></div>
+                    <div class="mb-2"><strong>DIRECCIÓN:</strong><input type="text" id="editDireccion" class="form-control form-control-sm" value="${cliente.direccion}"></div>
+                    <div class="mb-2"><strong>DÍA DE COBRO:</strong>
+                        <select id="editDiaCobro" class="form-select form-select-sm fw-bold text-primary">
+                            ${optionsDiaHtml}
+                        </select>
+                    </div>
+                    <div class="mb-2"><strong>CATEGORÍA:</strong>
+                        <select id="editCategoria" class="form-select form-select-sm">
+                            <option value="Artículos" ${cliente.categoria === 'Artículos' ? 'selected' : ''}>Artículos</option>
+                            <option value="Préstamos" ${cliente.categoria === 'Préstamos' ? 'selected' : ''}>Préstamos</option>
+                        </select>
+                    </div>
+                    <div class="mb-2"><strong>PERIODO:</strong>
+                        <select id="editPeriodo" class="form-select form-select-sm">
+                            <option value="Semanal" ${cliente.periodo === 'Semanal' ? 'selected' : ''}>Semanal</option>
+                            <option value="Quincenal" ${cliente.periodo === 'Quincenal' ? 'selected' : ''}>Quincenal</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-2"><strong>ARTÍCULO:</strong><input type="text" id="editArticulo" class="form-control form-control-sm" value="${cliente.articulo}"></div>
+                    <div class="mb-2"><strong>PRECIO ($):</strong><input type="number" id="editPrecio" class="form-control form-control-sm" value="${cliente.precio}"></div>
+                    <div class="mb-2"><strong>CUOTA PACTADA ($):</strong><input type="number" id="editAbono" class="form-control form-control-sm" value="${cliente.abonoSemanal}"></div>
+                </div>`;
+        } else {
+            const nombreNue = document.getElementById("editNombre").value.trim();
+            const telefonoNue = document.getElementById("editTelefono").value.replace(/\D/g, '').slice(-10);
+            const direccionNue = document.getElementById("editDireccion").value.trim();
+            const diaCobroNue = document.getElementById("editDiaCobro").value;
+            const categoriaNue = document.getElementById("editCategoria").value;
+            const periodoNue = document.getElementById("editPeriodo").value;
+            const articuloNue = document.getElementById("editArticulo").value.trim();
+            const precioNue = parseFloat(document.getElementById("editPrecio").value) || 0;
+            const abonoNue = parseFloat(document.getElementById("editAbono").value) || 0;
+
+            try {
+                const ref = doc(db, "clientes", cliente.id);
+                await updateDoc(ref, {
+                    nombre: nombreNue,
+                    telefono: telefonoNue,
+                    direccion: direccionNue,
+                    diaCobro: diaCobroNue,
+                    categoria: categoriaNue,
+                    periodo: periodoNue,
+                    articulo: articuloNue,
+                    precio: precioNue,
+                    abonoSemanal: abonoNue
+                });
+                editando = false;
+                btn.innerText = "✏️ Editar Datos";
+                btn.classList.replace("btn-primary", "btn-warning");
+            } catch (error) {
+                console.error("Error al actualizar cliente: ", error);
+            }
+        }
+    }
+
+    async function eliminarClienteActual() {
+        const cliente = clientesBD[clienteSeleccionadoIndex];
+        if (confirm(`¿Borrar permanentemente la cuenta de ${cliente.nombre}?`)) {
+            try {
+                await deleteDoc(doc(db, "clientes", cliente.id));
+                clienteSeleccionadoIndex = null;
+                mostrarBuscador();
+            } catch (error) {
+                console.error("Error al eliminar: ", error);
+            }
+        }
+    }
+
+    function renderizarHistorialCliente(cliente) {
+        const tabla = document.getElementById("cuerpoTablaPagos");
+        tabla.innerHTML = "";
+        let acumulado = 0;
+        let saldo = (parseFloat(cliente.precio) || 0) + (parseFloat(cliente.cargoAtrasoInicial) || 0);
+
+        (cliente.historialPagos || []).forEach((pago, i) => {
+            const abonoVal = parseFloat(pago.abono) || 0;
+            const cargoVal = parseFloat(pago.cargo) || 0;
+            acumulado += abonoVal;
+            saldo = saldo - abonoVal + cargoVal;
+            let num = String(i + 1).padStart(2, '0');
+            let metodo = pago.metodoPago || "Efectivo";
+
+            let fila = `<tr>
+                <td><strong>${num}</strong></td>
+                <td>${formatearDinero(abonoVal)}</td>
+                <td><span class="badge bg-secondary">${metodo}</span></td>
+                <td>${formatearDinero(acumulado)}</td>
+                <td>${formatearDinero(cargoVal)}</td>
+                <td class="text-danger fw-bold">${formatearDinero(saldo)}</td>
+                <td>${pago.fecha}</td>
+            </tr>`;
+            tabla.innerHTML += fila;
+        });
+    }
+
+    async function agregarPagoAClienteActual() {
+        const cliente = clientesBD[clienteSeleccionadoIndex];
+        const montoAbono = parseFloat(document.getElementById("inputAbono").value);
+        const montoCargo = parseFloat(document.getElementById("inputCargo").value) || 0;
+        const metodoPago = document.getElementById("inputMetodoPago").value;
+        const inputFecha = document.getElementById("inputFechaPago");
+
+        if (isNaN(montoAbono) || montoAbono <= 0) {
+            alert("Monto de abono inválido.");
+            return;
+        }
+
+        let fechaTxt = "";
+        if (inputFecha.value) {
+            const p = inputFecha.value.split("-");
+            fechaTxt = `${p[2]}/${p[1]}`;
+        } else {
+            const h = new Date();
+            fechaTxt = `${String(h.getDate()).padStart(2, '0')}/${String(h.getMonth() + 1).padStart(2, '0')}`;
+        }
+
+        const nuevoHistorial = [...(cliente.historialPagos || []), {
+            abono: montoAbono,
+            cargo: montoCargo,
+            metodoPago: metodoPago,
+            fecha: fechaTxt
+        }];
+
+        try {
+            const ref = doc(db, "clientes", cliente.id);
+            await updateDoc(ref, { historialPagos: nuevoHistorial });
+            document.getElementById("inputAbono").value = "";
+            document.getElementById("inputCargo").value = "0";
+            document.getElementById("inputMetodoPago").value = "Transferencia";
+        } catch (error) {
+            console.error("Error al registrar pago: ", error);
+        }
+    }
+
+    function mostrarBuscador() {
+        document.getElementById("vistaTarjeta").classList.add("d-none");
+        document.getElementById("vistaBusqueda").classList.remove("d-none");
+    }
+
+    function compartirPorWhatsApp() {
+        const cliente = clientesBD[clienteSeleccionadoIndex];
+        let totalPagado = (cliente.historialPagos || []).reduce((sum, p) => sum + p.abono, 0);
+        let totalCargos = (cliente.historialPagos || []).reduce((sum, p) => sum + p.cargo, 0);
+        let saldoActual = cliente.precio + totalCargos - totalPagado;
+
+        const hoy = new Date();
+        let semanasConsecutivas = 0;
+        if ((cliente.historialPagos || []).length === 0) {
+            semanasConsecutivas = 1;
+        } else {
+            let ultimoPago = cliente.historialPagos[cliente.historialPagos.length - 1];
+            let fechaUltimo = parsearFechaTexto(ultimoPago.fecha);
+            let diffTiempo = hoy - fechaUltimo;
+            let diasDiff = Math.floor(diffTiempo / (1000 * 60 * 60 * 24));
+            semanasConsecutivas = Math.max(0, Math.floor(diasDiff / 7));
+        }
+
+        let cuota = cliente.abonoSemanal || 0;
+        let montoAtraso = semanasConsecutivas * cuota;
+
+        let detalleAtrasoTexto = "";
+        let fraseConfirmacion = "";
+
+        if (semanasConsecutivas > 0) {
+            detalleAtrasoTexto = `Presenta un atraso de *${semanasConsecutivas} semana(s)* con un importe pendiente de *${formatearDinero(montoAtraso)}*.\n\n`;
+            fraseConfirmacion = `Agradecemos confirmar la fecha de su pago. Para cualquier duda o aclaración, por favor contáctenos.\n\n`;
+        }
+
+        const url = `${window.location.origin}${window.location.pathname}?folio=${cliente.folio}&modo=cliente`;
+        const mensaje = `Hola *${cliente.nombre}*, te compartimos tu estado de cuenta en DISTINTA.COM.\n\n` +
+                        `🔹 *Crédito N°:* ${cliente.folio}\n` +
+                        `🔹 *Concepto:* ${cliente.articulo}\n` +
+                        `🔹 *Saldo Restante:* ${formatearDinero(saldoActual)}\n\n` +
+                        detalleAtrasoTexto +
+                        fraseConfirmacion +
+                        `Revisa tu historial aquí: ${url}`;
+
+        const telLimpio = (cliente.telefono || "").replace(/\D/g, '');
+        const parametroTelefono = telLimpio.length === 10 ? `phone=521${telLimpio}&` : "";
+
+        window.open(`https://api.whatsapp.com/send?${parametroTelefono}text=${encodeURIComponent(mensaje)}`, '_blank');
+    }
+
+    function verificarPermisosAcceso() {
+        const parametros = new URLSearchParams(window.location.search);
+        const modo = parametros.get("modo");
+        const folioBuscado = parametros.get("folio");
+
+        if (modo === "cliente" && folioBuscado && clientesBD.length > 0) {
+            const index = clientesBD.findIndex(c => c.folio === folioBuscado);
+            if (index !== -1) {
+                const panelCarga = document.getElementById("pantallaCargandoCliente");
+                if (panelCarga) panelCarga.classList.add("d-none");
+
+                seleccionarCliente(index);
+
+                document.getElementById("seccionAdmin").style.display = "none";
+                document.getElementById("controlesEdicionAdmin").style.display = "none";
+                document.getElementById("btnVolver").style.display = "none";
+                document.getElementById("btnWhatsApp").style.display = "none";
+            }
+        }
+    }
+
+    // =========================================================================
+    // IMPORTADOR MASIVO DE TELÉFONOS DESDE CSV (GOOGLE CONTACTS ES/EN + EXCEL)
+    // =========================================================================
+    function normalizarNombreCruce(texto) {
+        if (!texto) return '';
+        return texto
+            .toString()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '') // Quita acentos
+            .toUpperCase()
+            .replace(/[^A-Z0-9\s]/g, ' ')    // Quita símbolos
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
+
+    function limpiarTel10Digitos(telRaw) {
+        if (!telRaw) return '';
+        const candidatos = telRaw.toString().split(':::');
+        for (let c of candidatos) {
+            const soloDigitos = c.replace(/\D/g, '');
+            if (soloDigitos.length >= 10) {
+                return soloDigitos.slice(-10);
+            }
+        }
+        return '';
+    }
+
+    function parsearLineaCSVContactos(linea, separador) {
+        const resultado = [];
+        let actual = '';
+        let dentroComillas = false;
+        for (let i = 0; i < linea.length; i++) {
+            const char = linea[i];
+            if (char === '"') {
+                dentroComillas = !dentroComillas;
+            } else if (char === separador && !dentroComillas) {
+                resultado.push(actual.trim());
+                actual = '';
+            } else {
+                actual += char;
+            }
+        }
+        resultado.push(actual.trim());
+        return resultado;
+    }
+
+    async function procesarCsvContactos(event) {
+        const archivo = event.target.files[0];
+        if (!archivo) return;
+
+        const panel = document.getElementById("panelCruceContactos");
+        const resumenDiv = document.getElementById("resumenCruceContactos");
+        const tablaDiv = document.getElementById("tablaRevisionContactos");
+
+        panel.classList.remove("d-none");
+        resumenDiv.innerHTML = `<span class="text-primary fw-bold">⏳ Analizando CSV y cruzando contra ${clientesBD.length} clientes...</span>`;
+        tablaDiv.innerHTML = "";
+
+        const lector = new FileReader();
+        lector.onload = async function(e) {
+            try {
+                const contenido = e.target.result;
+                const lineas = contenido.split(/\r?\n/).filter(l => l.trim() !== '');
+                if (lineas.length < 2) {
+                    resumenDiv.innerHTML = `<span class="text-danger fw-bold">❌ El archivo CSV está vacío.</span>`;
+                    return;
+                }
+
+                const separador = lineas[0].includes(';') && !lineas[0].includes(',') ? ';' : ',';
+                const encabezados = parsearLineaCSVContactos(lineas[0], separador).map(h => normalizarNombreCruce(h));
+
+                // Detectar columnas de nombre en español o inglés (Google Contacts CSV)
+                const idxNameCompleto = encabezados.findIndex(h => h === 'NAME' || h === 'NOMBRE' || h === 'NOMBRE COMPLETO');
+                const idxPila = encabezados.findIndex(h => h === 'GIVEN NAME' || h === 'FIRST NAME' || h === 'NOMBRE DE PILA');
+                const idxSegundo = encabezados.findIndex(h => h === 'ADDITIONAL NAME' || h === 'MIDDLE NAME' || h === 'SEGUNDO NOMBRE');
+                const idxApellido = encabezados.findIndex(h => h === 'FAMILY NAME' || h === 'LAST NAME' || h === 'APELLIDOS' || h === 'APELLIDO');
+
+                // Detectar todas las columnas de teléfono (español o inglés)
+                const indicesTel = [];
+                encabezados.forEach((h, idx) => {
+                    if (h.includes('PHONE') || h.includes('TELEFONO') || h.includes('CELULAR') || h.includes('MOVIL')) {
+                        if (h.includes('VALUE') || h.includes('VALOR') || (!h.includes('TYPE') && !h.includes('TIPO'))) {
+                            indicesTel.push(idx);
+                        }
+                    }
+                });
+
+                const contactosCSV = [];
+                for (let i = 1; i < lineas.length; i++) {
+                    const cols = parsearLineaCSVContactos(lineas[i], separador);
+
+                    // Armar nombre completo combinando columnas disponibles
+                    let partesNombre = [];
+                    if (idxNameCompleto !== -1 && cols[idxNameCompleto]) {
+                        partesNombre.push(cols[idxNameCompleto]);
+                    } else {
+                        if (idxPila !== -1 && cols[idxPila]) partesNombre.push(cols[idxPila]);
+                        if (idxSegundo !== -1 && cols[idxSegundo]) partesNombre.push(cols[idxSegundo]);
+                        if (idxApellido !== -1 && cols[idxApellido]) partesNombre.push(cols[idxApellido]);
+                    }
+                    if (partesNombre.length === 0 && cols[0]) {
+                        partesNombre.push(cols[0]);
+                    }
+
+                    const nombreCrudo = partesNombre.join(' ').replace(/\s+/g, ' ').trim();
+                    const nombreNorm = normalizarNombreCruce(nombreCrudo);
+
+                    // Buscar el teléfono en las columnas detectadas o en cualquier celda de la fila
+                    let telLimpio = '';
+                    for (const idxT of indicesTel) {
+                        telLimpio = limpiarTel10Digitos(cols[idxT]);
+                        if (telLimpio.length === 10) break;
+                    }
+                    if (telLimpio.length < 10) {
+                        for (let c = 0; c < cols.length; c++) {
+                            const candidato = limpiarTel10Digitos(cols[c]);
+                            if (candidato.length === 10) {
+                                telLimpio = candidato;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (nombreNorm.length >= 4 && telLimpio.length === 10) {
+                        contactosCSV.push({
+                            nombreOriginal: nombreCrudo,
+                            nombreNorm: nombreNorm,
+                            telefono: telLimpio
+                        });
+                    }
+                }
+
+                // Filtrar clientes en memoria (clientesBD) que aún no tienen 10 dígitos
+                const clientesSinTel = clientesBD.filter(c => {
+                    const telActual = (c.telefono || '').toString().replace(/\D/g, '');
+                    return telActual.length < 10 && c.nombre;
+                });
+
+                let exactosGuardados = 0;
+                const sugerencias = [];
+                let batch = writeBatch(db);
+                let opsEnBatch = 0;
+
+                for (const cliente of clientesSinTel) {
+                    const nombreClienteNorm = normalizarNombreCruce(cliente.nombre);
+                    const matchExacto = contactosCSV.find(c => c.nombreNorm === nombreClienteNorm);
+
+                    if (matchExacto) {
+                        const ref = doc(db, "clientes", cliente.id);
+                        batch.update(ref, { telefono: matchExacto.telefono });
+                        exactosGuardados++;
+                        opsEnBatch++;
+
+                        if (opsEnBatch === 450) {
+                            await batch.commit();
+                            batch = writeBatch(db);
+                            opsEnBatch = 0;
+                        }
+                    } else {
+                        // Coincidencia parcial (al menos 2 palabras de más de 2 letras coinciden)
+                        const palabrasCliente = nombreClienteNorm.split(' ').filter(p => p.length > 2);
+                        if (palabrasCliente.length >= 2) {
+                            const matchParcial = contactosCSV.find(c => {
+                                const coincidencias = palabrasCliente.filter(p => c.nombreNorm.includes(p));
+                                return coincidencias.length >= 2;
+                            });
+
+                            if (matchParcial) {
+                                sugerencias.push({
+                                    clienteId: cliente.id,
+                                    folio: cliente.folio || 'S/F',
+                                    nombreFirestore: cliente.nombre,
+                                    nombreCSV: matchParcial.nombreOriginal,
+                                    telefono: matchParcial.telefono
+                                });
+                            }
+                        }
+                    }
+                }
+
+                if (opsEnBatch > 0) {
+                    await batch.commit();
+                }
+
+                resumenDiv.innerHTML = `
+                    <div class="d-flex gap-2 flex-wrap">
+                        <span class="badge bg-info text-dark fs-6">📇 ${contactosCSV.length} contactos válidos leídos</span>
+                        <span class="badge bg-success fs-6">✅ ${exactosGuardados} vinculados en automático</span>
+                        <span class="badge bg-warning text-dark fs-6">⚠️ ${sugerencias.length} por confirmar</span>
+                        <span class="badge bg-secondary fs-6">📋 ${clientesSinTel.length} estaban sin teléfono</span>
+                    </div>
+                `;
+
+                if (sugerencias.length > 0) {
+                    let htmlTabla = `
+                        <p class="small text-muted mb-1 mt-2">Revisa estas coincidencias parciales y haz clic en <strong>Vincular</strong> si corresponden:</p>
+                        <div class="table-responsive" style="max-height: 260px;">
+                            <table class="table table-sm table-bordered table-striped align-middle mb-0 small bg-white">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Folio</th>
+                                        <th>En DistintaPAY</th>
+                                        <th>En Celular</th>
+                                        <th>Teléfono</th>
+                                        <th class="text-center">Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody>`;
+
+                    sugerencias.forEach((s, idx) => {
+                        htmlTabla += `
+                            <tr id="fila-sug-${idx}">
+                                <td><strong>${s.folio}</strong></td>
+                                <td>${s.nombreFirestore}</td>
+                                <td>${s.nombreCSV}</td>
+                                <td class="font-monospace">${s.telefono}</td>
+                                <td class="text-center">
+                                    <button type="button" class="btn btn-success btn-sm py-0 px-2 fw-bold"
+                                            onclick="confirmarTelefonoSugerido('${s.clienteId}', '${s.telefono}', 'fila-sug-${idx}')">
+                                        ✔ Vincular
+                                    </button>
+                                </td>
+                            </tr>`;
+                    });
+
+                    htmlTabla += `</tbody></table></div>`;
+                    tablaDiv.innerHTML = htmlTabla;
+                }
+            } catch (err) {
+                console.error("Error al procesar CSV:", err);
+                resumenDiv.innerHTML = `<span class="text-danger fw-bold">❌ Error al procesar: ${err.message}</span>`;
+            } finally {
+                event.target.value = '';
+            }
+        };
+
+        lector.readAsText(archivo, 'UTF-8');
+    }
+
+    async function confirmarTelefonoSugerido(clienteId, telefono, filaId) {
+        try {
+            await updateDoc(doc(db, "clientes", clienteId), { telefono: telefono });
+            const fila = document.getElementById(filaId);
+            if (fila) {
+                fila.classList.add("table-success");
+                fila.cells[4].innerHTML = `<span class="badge bg-success">Guardado ✅</span>`;
+            }
+        } catch (err) {
+            alert("Error al guardar teléfono: " + err.message);
+        }
+    }
+
+    // Exposición de funciones al entorno global
+    window.registrarCliente = registrarCliente;
+    window.filtrarClientes = filtrarClientes;
+    window.seleccionarCliente = seleccionarCliente;
+    window.activarModoEdicion = activarModoEdicion;
+    window.eliminarClienteActual = eliminarClienteActual;
+    window.agregarPagoAClienteActual = agregarPagoAClienteActual;
+    window.mostrarBuscador = mostrarBuscador;
+    window.compartirPorWhatsApp = compartirPorWhatsApp;
+    window.ajustarMetaManual = ajustarMetaManual;
+    window.exportarLiquidacionesCSV = exportarLiquidacionesCSV;
+    window.imprimirListaLiquidacion = imprimirListaLiquidacion;
+    window.exportarControlDiarioCSV = exportarControlDiarioCSV;
+    window.exportarControlDiarioPDF = exportarControlDiarioPDF;
+    window.imprimirControlDiario = imprimirControlDiario;
+    window.alternarTextoBotonDia = alternarTextoBotonDia;
+    window.aprobarExcepcionIA = aprobarExcepcionIA;
+    window.rechazarExcepcionIA = rechazarExcepcionIA;
+    window.procesarCsvContactos = procesarCsvContactos;
+    window.confirmarTelefonoSugerido = confirmarTelefonoSugerido;
+</script>
+
+</body>
+</html>
