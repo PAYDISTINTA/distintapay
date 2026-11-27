@@ -214,8 +214,8 @@
                                         <input type="number" id="regAbono" class="form-control" placeholder="0.00" required>
                                     </div>
                                     <div class="col-4">
-                                        <label class="form-label small fw-bold">Cargo Atraso</label>
-                                        <input type="number" id="regCargoAtraso" class="form-control" value="0">
+                                        <label class="form-label small fw-bold">Cargo por Atraso</label>
+                                        <input type="number" id="regCargoAtraso" class="form-control" value="0" title="Monto informativo de penalización por atraso">
                                     </div>
                                 </div>
                                 <button type="submit" class="btn btn-primary w-100 fw-bold py-2 shadow-sm">💾 Guardar Cliente</button>
@@ -392,7 +392,7 @@
                     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2 border-bottom pb-3">
                         <div>
                             <h4 class="fw-bold text-dark mb-0">🎯 Cuentas Próximas a Liquidar (Saldo ≤ $1,500.00)</h4>
-                            <small class="text-muted">Haz clic en cualquier cliente para abrir su tarjeta digital</small>
+                            <small class="text-muted">Haz clic en cualquier cliente para abrir su tarjeta digital o invita a renovar las cuentas liquidadas</small>
                         </div>
                         <div class="d-flex align-items-center gap-2 no-print flex-wrap">
                             <span class="badge bg-primary fs-6 px-3 py-2">
@@ -412,9 +412,9 @@
                             <thead class="table-primary text-dark">
                                 <tr>
                                     <th style="width: 15%;">N° CLIENTE / FOLIO</th>
-                                    <th style="width: 35%;" class="text-start">NOMBRE COMPLETO</th>
-                                    <th style="width: 30%;" class="text-start">ARTÍCULO / CONCEPTO</th>
-                                    <th style="width: 20%;">SALDO PENDIENTE</th>
+                                    <th style="width: 30%;" class="text-start">NOMBRE COMPLETO</th>
+                                    <th style="width: 27%;" class="text-start">ARTÍCULO / CONCEPTO</th>
+                                    <th style="width: 28%;">SALDO / ACCIÓN</th>
                                 </tr>
                             </thead>
                             <tbody id="cuerpoTablaMenores1500"></tbody>
@@ -469,17 +469,21 @@
 
         <div class="row g-3 mb-4" id="contenedorDatosCliente"></div>
 
-        <!-- PANEL DE CAPTURA CON SELECTOR DE MÉTODO DE PAGO -->
+        <!-- PANEL DE CAPTURA CON SELECTOR DE DESCUENTO Y MÉTODO DE PAGO -->
         <div id="seccionAdmin" class="card p-3 mb-4 bg-light border-0 shadow-sm text-dark">
-            <h6 class="fw-bold mb-2">Capturar Abono Manual</h6>
+            <h6 class="fw-bold mb-2">Capturar Abono Manual / Descuento</h6>
             <div class="row g-2">
-                <div class="col-6 col-md-3">
+                <div class="col-6 col-md-2">
                     <label class="form-label small fw-bold mb-1">Abono ($)</label>
-                    <input type="number" id="inputAbono" class="form-control" placeholder="Monto" required>
+                    <input type="number" step="0.01" id="inputAbono" class="form-control" placeholder="Monto" value="0">
                 </div>
                 <div class="col-6 col-md-2">
                     <label class="form-label small fw-bold mb-1">Cargo Atraso ($)</label>
-                    <input type="number" id="inputCargo" class="form-control" placeholder="Cargo" value="0">
+                    <input type="number" step="0.01" id="inputCargo" class="form-control" placeholder="Cargo" value="0">
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label small fw-bold mb-1 text-primary">🏷️ Descuento ($)</label>
+                    <input type="number" step="0.01" id="inputDescuento" class="form-control border-primary" placeholder="0" value="0" title="Descuento por pago anticipado o corrección de saldo">
                 </div>
                 <div class="col-6 col-md-2">
                     <label class="form-label small fw-bold mb-1">Método de Pago</label>
@@ -489,11 +493,11 @@
                         <option value="Efectivo">Efectivo</option>
                     </select>
                 </div>
-                <div class="col-6 col-md-3">
+                <div class="col-6 col-md-2">
                     <label class="form-label small fw-bold mb-1">Fecha de Pago</label>
                     <input type="date" id="inputFechaPago" class="form-control">
                 </div>
-                <div class="col-12 col-md-2 d-flex align-items-end">
+                <div class="col-6 col-md-2 d-flex align-items-end">
                     <button class="btn btn-success w-100 fw-bold" onclick="agregarPagoAClienteActual()">Registrar</button>
                 </div>
             </div>
@@ -718,6 +722,7 @@
         const nuevoPago = {
             abono: montoAplicar,
             cargo: 0,
+            descuento: 0,
             metodoPago: metodoAplicar,
             fecha: fechaTxt
         };
@@ -809,9 +814,10 @@
         clientesBD.forEach((cliente, index) => {
             const tel = cliente.telefono || "";
             if (cliente.nombre.toLowerCase().includes(query) || cliente.folio.toLowerCase().includes(query) || tel.includes(query) || (cliente.articulo || '').toLowerCase().includes(query)) {
-                let totalPagado = (cliente.historialPagos || []).reduce((sum, p) => sum + p.abono, 0);
-                let totalCargos = (cliente.historialPagos || []).reduce((sum, p) => sum + p.cargo, 0);
-                let saldoActual = cliente.precio + totalCargos - totalPagado;
+                let totalPagado = (cliente.historialPagos || []).reduce((sum, p) => sum + (parseFloat(p.abono) || 0), 0);
+                let totalDescuentos = (cliente.historialPagos || []).reduce((sum, p) => sum + (parseFloat(p.descuento) || 0), 0);
+                let totalCargos = (cliente.historialPagos || []).reduce((sum, p) => sum + (parseFloat(p.cargo) || 0), 0);
+                let saldoActual = cliente.precio + totalCargos - totalPagado - totalDescuentos;
 
                 totalClientesListados++;
                 let cat = cliente.categoria || "Artículos";
@@ -850,23 +856,25 @@
         let agrupacionPorDia = { "Viernes": [], "Sábado": [], "Domingo": [], "Lunes": [], "Martes": [], "Miércoles": [], "Jueves": [] };
 
         clientesBD.forEach((c, idx) => {
-            let totalPagado = (c.historialPagos || []).reduce((sum, p) => sum + p.abono, 0);
-            let totalCargos = (c.historialPagos || []).reduce((sum, p) => sum + p.cargo, 0);
-            let saldoActual = c.precio + totalCargos - totalPagado;
+            let totalPagado = (c.historialPagos || []).reduce((sum, p) => sum + (parseFloat(p.abono) || 0), 0);
+            let totalDescuentos = (c.historialPagos || []).reduce((sum, p) => sum + (parseFloat(p.descuento) || 0), 0);
+            let totalCargos = (c.historialPagos || []).reduce((sum, p) => sum + (parseFloat(p.cargo) || 0), 0);
+            let saldoActual = c.precio + totalCargos - totalPagado - totalDescuentos;
 
             let pagoCiclo = null;
             (c.historialPagos || []).forEach(p => {
                 let fP = parsearFechaTexto(p.fecha);
-                if (fP >= cicloActual.inicio && fP <= cicloActual.fin) {
+                if (fP >= cicloActual.inicio && fP <= cicloActual.fin && (parseFloat(p.abono) || 0) > 0) {
                     pagoCiclo = p;
                 }
             });
 
             let semanasConsecutivas = 0;
-            if ((c.historialPagos || []).length === 0) {
+            const pagosReales = (c.historialPagos || []).filter(p => (parseFloat(p.abono) || 0) > 0);
+            if (pagosReales.length === 0) {
                 semanasConsecutivas = 1;
             } else {
-                let ultimoPago = c.historialPagos[c.historialPagos.length - 1];
+                let ultimoPago = pagosReales[pagosReales.length - 1];
                 let fechaUltimo = parsearFechaTexto(ultimoPago.fecha);
                 let diffTiempo = hoy - fechaUltimo;
                 let diasDiff = Math.floor(diffTiempo / (1000 * 60 * 60 * 24));
@@ -1272,14 +1280,16 @@
         cuerpoTabla.innerHTML = "";
 
         let clientesConSaldo = clientesBD.map((cliente, indexOriginal) => {
-            let totalPagado = (cliente.historialPagos || []).reduce((sum, p) => sum + p.abono, 0);
-            let totalCargos = (cliente.historialPagos || []).reduce((sum, p) => sum + p.cargo, 0);
-            let saldoActual = cliente.precio + totalCargos - totalPagado;
+            let totalPagado = (cliente.historialPagos || []).reduce((sum, p) => sum + (parseFloat(p.abono) || 0), 0);
+            let totalDescuentos = (cliente.historialPagos || []).reduce((sum, p) => sum + (parseFloat(p.descuento) || 0), 0);
+            let totalCargos = (cliente.historialPagos || []).reduce((sum, p) => sum + (parseFloat(p.cargo) || 0), 0);
+            let saldoActual = cliente.precio + totalCargos - totalPagado - totalDescuentos;
             
             return {
                 indexOriginal: indexOriginal,
                 folio: cliente.folio,
                 nombre: cliente.nombre,
+                telefono: cliente.telefono || "",
                 articulo: cliente.articulo || "Sin especificar",
                 saldo: saldoActual
             };
@@ -1296,9 +1306,27 @@
         }
 
         clientesFiltradosLiquidacion.forEach(item => {
-            const saldoHtml = item.saldo === 0 
-                ? `<span class="badge bg-success fs-6">LIQUIDADO ($0.00)</span>` 
-                : `<span class="fw-bold text-danger fs-6">${formatearDinero(item.saldo)}</span>`;
+            let saldoHtml = "";
+
+            if (item.saldo === 0) {
+                const msgRenovacion = `Hola *${item.nombre}*, ¡muchas gracias por tu compromiso y puntualidad! En *DISTINTA.COM* confirmamos que tu cuenta *N° ${item.folio}* (${item.articulo}) ha quedado *100% LIQUIDADA ($0.00)*.\n\n` +
+                                      `Por tu excelente historial de pago, ya tienes *autorizada tu renovación* con beneficios preferenciales (sin trámites complicados y con entrega directa a domicilio) en préstamos personales, muebles, colchones, pantallas, celulares y línea blanca con pagos semanales o quincenales a tu medida.\n\n` +
+                                      `¿Te gustaría cotizar tu próximo préstamo o artículo hoy mismo? Con gusto te atendemos por este medio.`;
+
+                const telLimpio = (item.telefono || "").replace(/\D/g, '');
+                const paramTel = telLimpio.length === 10 ? `phone=521${telLimpio}&` : "";
+                const urlRenovacion = `https://api.whatsapp.com/send?${paramTel}text=${encodeURIComponent(msgRenovacion)}`;
+
+                saldoHtml = `
+                    <div class="d-flex justify-content-center align-items-center gap-2 flex-wrap">
+                        <span class="badge bg-success fs-6">LIQUIDADO ($0.00)</span>
+                        <a href="${urlRenovacion}" target="_blank" onclick="event.stopPropagation()" class="btn btn-outline-success btn-sm fw-bold shadow-sm">
+                            🎉 Invitar Renovación
+                        </a>
+                    </div>`;
+            } else {
+                saldoHtml = `<span class="fw-bold text-danger fs-6">${formatearDinero(item.saldo)}</span>`;
+            }
 
             let fila = `<tr class="fila-liquidacion" onclick="seleccionarCliente(${item.indexOriginal})" title="Clic para abrir tarjeta del cliente">
                 <td><span class="badge bg-dark fs-6">N° ${item.folio}</span></td>
@@ -1380,41 +1408,44 @@
                                (cliente.articulo || "").toLowerCase().includes("pp");
 
             (cliente.historialPagos || []).forEach(pago => {
+                const abonoMonto = parseFloat(pago.abono) || 0;
+                if (abonoMonto <= 0) return;
+
                 const fPago = parsearFechaTexto(pago.fecha);
 
                 if (fPago >= cicloActual.inicio && fPago <= cicloActual.fin) {
-                    totalSemanaActual += pago.abono;
+                    totalSemanaActual += abonoMonto;
                     abonosSemanaActual++;
 
                     if (esPrestamo) {
-                        totalPrestamos += pago.abono;
+                        totalPrestamos += abonoMonto;
                         abonosPrestamos++;
                     } else {
-                        totalArticulos += pago.abono;
+                        totalArticulos += abonoMonto;
                         abonosArticulos++;
                     }
 
                     const metodo = pago.metodoPago || "Efectivo";
                     if (metodo === "Transferencia") {
-                        totalTransferencia += pago.abono;
+                        totalTransferencia += abonoMonto;
                         conteoTransferencia++;
                     } else if (metodo === "Depósito") {
-                        totalDeposito += pago.abono;
+                        totalDeposito += abonoMonto;
                         conteoDeposito++;
                     } else {
-                        totalEfectivo += pago.abono;
+                        totalEfectivo += abonoMonto;
                         conteoEfectivo++;
                     }
 
                     const dia = fPago.getDay();
                     if (diasSemanaMap[dia]) {
-                        diasSemanaMap[dia].total += pago.abono;
+                        diasSemanaMap[dia].total += abonoMonto;
                         diasSemanaMap[dia].conteo++;
                     }
                 }
 
                 if (fPago >= cicloAnterior.inicio && fPago <= cicloAnterior.fin) {
-                    totalSemanaAnterior += pago.abono;
+                    totalSemanaAnterior += abonoMonto;
                 }
             });
         });
@@ -1491,6 +1522,9 @@
         const m = String(hoy.getMonth() + 1).padStart(2, '0');
         const d = String(hoy.getDate()).padStart(2, '0');
         document.getElementById("inputFechaPago").value = `${y}-${m}-${d}`;
+        document.getElementById("inputAbono").value = "";
+        document.getElementById("inputCargo").value = "0";
+        document.getElementById("inputDescuento").value = "0";
         document.getElementById("inputMetodoPago").value = "Transferencia";
 
         document.getElementById("vistaBusqueda").classList.add("d-none");
@@ -1500,7 +1534,7 @@
 
     function restaurarVistaDatosFijos(cliente) {
         const contenedor = document.getElementById("contenedorDatosCliente");
-        let inicialPenalizacion = cliente.cargoAtrasoInicial || 0;
+        let cargoAtrasoInformativo = cliente.cargoAtrasoInicial || 0;
         let telVisual = cliente.telefono ? `<span class="badge bg-success">${cliente.telefono}</span>` : `<span class="badge bg-secondary">Sin asignar</span>`;
 
         contenedor.innerHTML = `
@@ -1515,7 +1549,7 @@
             <div class="col-md-6 text-md-end">
                 <p class="mb-1"><strong>CONCEPTO:</strong> <span>${cliente.articulo}</span></p>
                 <p class="mb-1"><strong>PRECIO:</strong> <span>${formatearDinero(cliente.precio)}</span></p>
-                <p class="mb-1"><strong>CARGO INICIAL:</strong> <span>${formatearDinero(inicialPenalizacion)}</span></p>
+                <p class="mb-1"><strong>CARGO POR ATRASO:</strong> <span>${formatearDinero(cargoAtrasoInformativo)}</span></p>
                 <p class="mb-1"><strong>CUOTA PACTADA:</strong> <span>${formatearDinero(cliente.abonoSemanal)}</span></p>
             </div>`;
     }
@@ -1559,6 +1593,7 @@
                 <div class="col-md-6">
                     <div class="mb-2"><strong>ARTÍCULO:</strong><input type="text" id="editArticulo" class="form-control form-control-sm" value="${cliente.articulo}"></div>
                     <div class="mb-2"><strong>PRECIO ($):</strong><input type="number" id="editPrecio" class="form-control form-control-sm" value="${cliente.precio}"></div>
+                    <div class="mb-2"><strong>CARGO POR ATRASO (INFORMATIVO $):</strong><input type="number" id="editCargoAtraso" class="form-control form-control-sm" value="${cliente.cargoAtrasoInicial || 0}"></div>
                     <div class="mb-2"><strong>CUOTA PACTADA ($):</strong><input type="number" id="editAbono" class="form-control form-control-sm" value="${cliente.abonoSemanal}"></div>
                 </div>`;
         } else {
@@ -1570,6 +1605,7 @@
             const periodoNue = document.getElementById("editPeriodo").value;
             const articuloNue = document.getElementById("editArticulo").value.trim();
             const precioNue = parseFloat(document.getElementById("editPrecio").value) || 0;
+            const cargoAtrasoNue = parseFloat(document.getElementById("editCargoAtraso").value) || 0;
             const abonoNue = parseFloat(document.getElementById("editAbono").value) || 0;
 
             try {
@@ -1583,6 +1619,7 @@
                     periodo: periodoNue,
                     articulo: articuloNue,
                     precio: precioNue,
+                    cargoAtrasoInicial: cargoAtrasoNue,
                     abonoSemanal: abonoNue
                 });
                 editando = false;
@@ -1611,20 +1648,34 @@
         const tabla = document.getElementById("cuerpoTablaPagos");
         tabla.innerHTML = "";
         let acumulado = 0;
-        let saldo = (parseFloat(cliente.precio) || 0) + (parseFloat(cliente.cargoAtrasoInicial) || 0);
+        let saldo = parseFloat(cliente.precio) || 0;
 
         (cliente.historialPagos || []).forEach((pago, i) => {
             const abonoVal = parseFloat(pago.abono) || 0;
+            const descuentoVal = parseFloat(pago.descuento) || 0;
             const cargoVal = parseFloat(pago.cargo) || 0;
-            acumulado += abonoVal;
-            saldo = saldo - abonoVal + cargoVal;
+
+            acumulado += (abonoVal + descuentoVal);
+            saldo = saldo - abonoVal - descuentoVal + cargoVal;
+
             let num = String(i + 1).padStart(2, '0');
             let metodo = pago.metodoPago || "Efectivo";
 
+            let detalleAbonoHtml = formatearDinero(abonoVal);
+            if (descuentoVal > 0 && abonoVal > 0) {
+                detalleAbonoHtml += `<br><span class="badge bg-primary">🏷️ Desc: -${formatearDinero(descuentoVal)}</span>`;
+            } else if (descuentoVal > 0 && abonoVal === 0) {
+                detalleAbonoHtml = `<span class="badge bg-primary fs-6">🏷️ Desc: -${formatearDinero(descuentoVal)}</span>`;
+            }
+
+            let badgeMetodo = descuentoVal > 0 && abonoVal === 0
+                ? `<span class="badge bg-info text-dark">Descuento</span>`
+                : `<span class="badge bg-secondary">${metodo}</span>`;
+
             let fila = `<tr>
                 <td><strong>${num}</strong></td>
-                <td>${formatearDinero(abonoVal)}</td>
-                <td><span class="badge bg-secondary">${metodo}</span></td>
+                <td>${detalleAbonoHtml}</td>
+                <td>${badgeMetodo}</td>
                 <td>${formatearDinero(acumulado)}</td>
                 <td>${formatearDinero(cargoVal)}</td>
                 <td class="text-danger fw-bold">${formatearDinero(saldo)}</td>
@@ -1636,13 +1687,14 @@
 
     async function agregarPagoAClienteActual() {
         const cliente = clientesBD[clienteSeleccionadoIndex];
-        const montoAbono = parseFloat(document.getElementById("inputAbono").value);
+        const montoAbono = parseFloat(document.getElementById("inputAbono").value) || 0;
         const montoCargo = parseFloat(document.getElementById("inputCargo").value) || 0;
+        const montoDescuento = parseFloat(document.getElementById("inputDescuento").value) || 0;
         const metodoPago = document.getElementById("inputMetodoPago").value;
         const inputFecha = document.getElementById("inputFechaPago");
 
-        if (isNaN(montoAbono) || montoAbono <= 0) {
-            alert("Monto de abono inválido.");
+        if (montoAbono <= 0 && montoDescuento <= 0) {
+            alert("Ingresa un monto de Abono o un Descuento mayor a $0.00.");
             return;
         }
 
@@ -1655,10 +1707,13 @@
             fechaTxt = `${String(h.getDate()).padStart(2, '0')}/${String(h.getMonth() + 1).padStart(2, '0')}`;
         }
 
+        const metodoFinal = (montoAbono === 0 && montoDescuento > 0) ? "Descuento" : metodoPago;
+
         const nuevoHistorial = [...(cliente.historialPagos || []), {
             abono: montoAbono,
             cargo: montoCargo,
-            metodoPago: metodoPago,
+            descuento: montoDescuento,
+            metodoPago: metodoFinal,
             fecha: fechaTxt
         }];
 
@@ -1667,9 +1722,10 @@
             await updateDoc(ref, { historialPagos: nuevoHistorial });
             document.getElementById("inputAbono").value = "";
             document.getElementById("inputCargo").value = "0";
+            document.getElementById("inputDescuento").value = "0";
             document.getElementById("inputMetodoPago").value = "Transferencia";
         } catch (error) {
-            console.error("Error al registrar pago: ", error);
+            console.error("Error al registrar movimiento: ", error);
         }
     }
 
@@ -1680,16 +1736,18 @@
 
     function compartirPorWhatsApp() {
         const cliente = clientesBD[clienteSeleccionadoIndex];
-        let totalPagado = (cliente.historialPagos || []).reduce((sum, p) => sum + p.abono, 0);
-        let totalCargos = (cliente.historialPagos || []).reduce((sum, p) => sum + p.cargo, 0);
-        let saldoActual = cliente.precio + totalCargos - totalPagado;
+        let totalPagado = (cliente.historialPagos || []).reduce((sum, p) => sum + (parseFloat(p.abono) || 0), 0);
+        let totalDescuentos = (cliente.historialPagos || []).reduce((sum, p) => sum + (parseFloat(p.descuento) || 0), 0);
+        let totalCargos = (cliente.historialPagos || []).reduce((sum, p) => sum + (parseFloat(p.cargo) || 0), 0);
+        let saldoActual = cliente.precio + totalCargos - totalPagado - totalDescuentos;
 
         const hoy = new Date();
         let semanasConsecutivas = 0;
-        if ((cliente.historialPagos || []).length === 0) {
+        const pagosReales = (cliente.historialPagos || []).filter(p => (parseFloat(p.abono) || 0) > 0);
+        if (pagosReales.length === 0) {
             semanasConsecutivas = 1;
         } else {
-            let ultimoPago = cliente.historialPagos[cliente.historialPagos.length - 1];
+            let ultimoPago = pagosReales[pagosReales.length - 1];
             let fechaUltimo = parsearFechaTexto(ultimoPago.fecha);
             let diffTiempo = hoy - fechaUltimo;
             let diasDiff = Math.floor(diffTiempo / (1000 * 60 * 60 * 24));
